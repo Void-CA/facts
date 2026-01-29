@@ -44,5 +44,18 @@ public static class InvoiceEndpoints
             await db.SaveChangesAsync();
             return Results.NoContent();
         });
+
+
+        group.MapGet("/full_invoice/{id:int}", async (int id, AppDbContext db) =>
+        {
+            var invoice = await db.Invoices
+                .Include(i => i.Client)   // Carga los datos del cliente
+                .Include(i => i.Services) // Carga la lista de servicios/items
+                .FirstOrDefaultAsync(i => i.Id == id);
+
+            if (invoice == null) return Results.NotFound();
+
+            return Results.Ok(invoice);
+        });
     }
 }

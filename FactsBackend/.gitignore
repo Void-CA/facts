@@ -45,3 +45,9 @@ TestResults/
 # ===== OS =====
 .DS_Store
 Thumbs.db
+
+# ===== Database =====
+Migrations/
+*.db
+*.db-shm
+*.db-wal

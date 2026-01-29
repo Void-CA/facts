@@ -21,6 +21,10 @@ const invoiceService = {
     delete: async (id: string) => {
         await apiClient.delete(`/invoices/${id}`);
     },
+    getFullInvoice: async (id: string) => {
+        const response = await apiClient.get<Invoice>(`/invoices/full_invoice/${id}`);
+        return response.data;
+    },
 };
 
 export default invoiceService;
