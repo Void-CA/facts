@@ -4,6 +4,7 @@ import clientService from '../services/clientService';
 import { Invoice, Client } from '../services/types';
 import { Plus, Trash2, Calendar, FileText, Filter, Eye, Edit2, X, Download } from 'lucide-react';
 import InvoiceForm from '../components/forms/InvoiceForm';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Invoices: React.FC = () => {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -12,6 +13,7 @@ const Invoices: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
     const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
     const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+    const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -48,14 +50,14 @@ const Invoices: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (confirm('¿Eliminar esta factura?')) {
-            try {
-                await invoiceService.delete(id.toString());
-                fetchData();
-            } catch (error) {
-                console.error('Delete failed');
-            }
+    const handleDelete = async () => {
+        if (!invoiceToDelete) return;
+        try {
+            await invoiceService.delete(invoiceToDelete.id.toString());
+            setInvoiceToDelete(null);
+            fetchData();
+        } catch (error) {
+            console.error('Delete failed');
         }
     };
 
@@ -144,7 +146,7 @@ const Invoices: React.FC = () => {
                                             <button onClick={() => handleEdit(invoice)} className="p-2 text-text-muted hover:text-primary transition-colors hover:bg-primary/5 rounded-lg">
                                                 <Edit2 size={18} />
                                             </button>
-                                            <button onClick={() => handleDelete(invoice.id)} className="p-2 text-text-muted hover:text-red-500 transition-colors hover:bg-red-50 rounded-lg">
+                                            <button onClick={() => setInvoiceToDelete(invoice)} className="p-2 text-text-muted hover:text-red-500 transition-colors hover:bg-red-50 rounded-lg">
                                                 <Trash2 size={18} />
                                             </button>
                                         </div>
@@ -263,6 +265,17 @@ const Invoices: React.FC = () => {
                     </div>
                 </div>
             )}
+            {/* Confirm Delete Modal */}
+            <ConfirmModal
+                isOpen={!!invoiceToDelete}
+                title="Eliminar Factura"
+                message={`¿Estás seguro de que deseas eliminar la factura "${invoiceToDelete?.printNumber}"? Esta acción eliminará permanentemente todos sus conceptos vinculados.`}
+                confirmText="Eliminar permanentemente"
+                cancelText="Mantener factura"
+                onConfirm={handleDelete}
+                onCancel={() => setInvoiceToDelete(null)}
+                type="danger"
+            />
         </div>
     );
 };

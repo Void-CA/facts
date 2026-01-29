@@ -3,6 +3,7 @@ import clientService from '../services/clientService';
 import { Client } from '../services/types';
 import { Plus, Edit2, Trash2, Mail, Phone, MapPin, Search } from 'lucide-react';
 import ClientForm from '../components/forms/ClientForm';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Clients: React.FC = () => {
     const [clients, setClients] = useState<Client[]>([]);
@@ -10,6 +11,7 @@ const Clients: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
+    const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
     useEffect(() => {
         fetchClients();
@@ -42,14 +44,14 @@ const Clients: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (confirm('¿Estás seguro de eliminar este cliente?')) {
-            try {
-                await clientService.delete(id.toString());
-                fetchClients();
-            } catch (error) {
-                console.error('Delete failed');
-            }
+    const handleDelete = async () => {
+        if (!clientToDelete) return;
+        try {
+            await clientService.delete(clientToDelete.id.toString());
+            setClientToDelete(null);
+            fetchClients();
+        } catch (error) {
+            console.error('Delete failed');
         }
     };
 
@@ -89,7 +91,7 @@ const Clients: React.FC = () => {
             </div>
 
             {loading ? (
-                <div className="flex justify-center py-12 text-primary">Cargando...</div>
+                <div className="flex justify-center py-12 text-primary uppercase font-bold tracking-widest animate-pulse">Cargando...</div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredClients.map(client => (
@@ -102,7 +104,7 @@ const Clients: React.FC = () => {
                                     <button onClick={() => openEdit(client)} className="p-2 text-text-muted hover:text-primary transition-colors hover:bg-primary/5 rounded-lg">
                                         <Edit2 size={18} />
                                     </button>
-                                    <button onClick={() => handleDelete(client.id)} className="p-2 text-text-muted hover:text-red-500 transition-colors hover:bg-red-50 rounded-lg">
+                                    <button onClick={() => setClientToDelete(client)} className="p-2 text-text-muted hover:text-red-500 transition-colors hover:bg-red-50 rounded-lg">
                                         <Trash2 size={18} />
                                     </button>
                                 </div>
@@ -136,7 +138,7 @@ const Clients: React.FC = () => {
                 </div>
             )}
 
-            {/* Modal */}
+            {/* Modal Form */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
                     <div className="w-full max-w-4xl my-8">
@@ -149,6 +151,18 @@ const Clients: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Confirm Delete Modal */}
+            <ConfirmModal
+                isOpen={!!clientToDelete}
+                title="Eliminar Cliente"
+                message={`¿Estás seguro de que deseas eliminar a "${clientToDelete?.name}"? Esta acción no se puede deshacer.`}
+                confirmText="Eliminar permanentemente"
+                cancelText="Mantener cliente"
+                onConfirm={handleDelete}
+                onCancel={() => setClientToDelete(null)}
+                type="danger"
+            />
         </div>
     );
 };
