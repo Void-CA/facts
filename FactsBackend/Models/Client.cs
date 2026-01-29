@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 public class Client
 {
@@ -19,5 +20,6 @@ public class Client
     [MaxLength(100), EmailAddress]
     public string? Email { get; set; }
 
+    [JsonIgnore]
     public List<Invoice> Invoices { get; set; } = new();
 }

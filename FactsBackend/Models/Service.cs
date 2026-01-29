@@ -1,10 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 public class Service
 {
     public int Id { get; set; }
 
     public int InvoiceId { get; set; }
+    [JsonIgnore]
     public Invoice Invoice { get; set; } = null!;
 
     public int Quantity { get; set; } = 1;

@@ -24,6 +24,7 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({
 
     const client = clients.find(c => c.id === invoice.clientId);
 
+    console.log(invoice);
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-surface border border-border w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
