@@ -1,0 +1,69 @@
+// Models/Client.cs
+public class Client
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public string Phone { get; set; }
+    public string Address { get; set; }
+    public string TaxId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+// Models/Invoice.cs
+public class Invoice
+{
+    public Guid Id { get; set; }
+    public string InvoiceNumber { get; set; }
+    public DateTime Date { get; set; }
+    public DateTime DueDate { get; set; }
+    public Guid ClientId { get; set; }
+    public string ClientName { get; set; } // Opcional, cargado por el backend
+    public List<InvoiceItem> Items { get; set; } = new();
+    public decimal Subtotal { get; set; }
+    public decimal Tax { get; set; }
+    public decimal Total { get; set; }
+    public string Status { get; set; } // Draft, Sent, Paid, etc.
+    public string Notes { get; set; }
+}
+
+public class InvoiceItem
+{
+    public Guid Id { get; set; }
+    public string Description { get; set; }
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal Total { get; set; }
+}
+
+// Controllers/ClientsController.cs
+[ApiController]
+[Route("api/[controller]")]
+public class ClientsController : ControllerBase
+{
+    private static List<Client> _clients = new(); // Reemplazar con DB Context
+
+    [HttpGet]
+    public ActionResult<IEnumerable<Client>> Get() => _clients;
+
+    [HttpPost]
+    public ActionResult<Client> Post(Client client)
+    {
+        client.Id = Guid.NewGuid();
+        _clients.Add(client);
+        return CreatedAtAction(nameof(Get), new { id = client.Id }, client);
+    }
+    
+    // Implementar Put y Delete...
+}
+
+// Program.cs - Habilitar CORS para Tauri (importante)
+builder.Services.AddCors(options => {
+    options.AddPolicy("TauriPolicy", policy => {
+        policy.WithOrigins("http://localhost:1420", "tauri://localhost")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+app.UseCors("TauriPolicy");
