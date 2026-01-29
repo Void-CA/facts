@@ -47,8 +47,8 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
                         </thead>
                         <tbody className="divide-y divide-border/50">
                             {items.map((item, index) => (
-                                <tr key={index} className="hover:bg-primary/5 transition-colors group">
-                                    <td className="px-4 py-3">
+                                <tr key={index} className="hover:bg-primary/5 transition-colors group items-start">
+                                    <td className="px-4 py-3 align-top">
                                         <input
                                             type="number"
                                             value={item.quantity}
@@ -56,16 +56,27 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
                                             className="w-full bg-transparent text-text-main font-medium focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 transition-all"
                                         />
                                     </td>
-                                    <td className="px-4 py-3">
-                                        <input
-                                            type="text"
+                                    <td className="px-4 py-3 align-top">
+                                        <textarea
                                             value={item.description}
                                             onChange={(e) => onUpdate(index, 'description', e.target.value)}
-                                            className="w-full bg-transparent text-text-main focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 transition-all"
+                                            className="w-full bg-transparent text-text-main focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 transition-all resize-none min-h-[38px] overflow-hidden"
                                             placeholder="Describa el servicio..."
+                                            rows={1}
+                                            onInput={(e) => {
+                                                const target = e.target as HTMLTextAreaElement;
+                                                target.style.height = 'auto';
+                                                target.style.height = `${target.scrollHeight}px`;
+                                            }}
+                                            ref={(el) => {
+                                                if (el) {
+                                                    el.style.height = 'auto';
+                                                    el.style.height = `${el.scrollHeight}px`;
+                                                }
+                                            }}
                                         />
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="px-4 py-3 align-top">
                                         <div className="flex items-center gap-1">
                                             <span className="text-text-muted text-sm">$</span>
                                             <input
@@ -77,12 +88,12 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
                                             />
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3 text-right">
+                                    <td className="px-4 py-3 text-right align-top">
                                         <span className="text-text-main font-bold">
                                             ${item.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3 text-center">
+                                    <td className="px-4 py-3 text-center align-top">
                                         <button
                                             type="button"
                                             onClick={() => onRemove(index)}
