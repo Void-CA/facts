@@ -16,5 +16,8 @@ public class Client
     [MaxLength(20)]
     public string RUC { get; set; } = "None";
 
+    [MaxLength(100), EmailAddress]
+    public string? Email { get; set; }
+
     public List<Invoice> Invoices { get; set; } = new();
 }

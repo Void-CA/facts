@@ -21,7 +21,7 @@ const ClientSelect: React.FC<ClientSelectProps> = ({
     const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
 
-    const selectedClient = clients.find(c => c.id === selectedClientId);
+    const selectedClient = clients.find(c => c.id.toString() === selectedClientId);
 
     const filteredClients = clients.filter(c =>
         c.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -82,13 +82,13 @@ const ClientSelect: React.FC<ClientSelectProps> = ({
                             filteredClients.map(client => (
                                 <div
                                     key={client.id}
-                                    onClick={() => handleSelect(client.id)}
-                                    className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-primary/10 transition-colors flex flex-col ${selectedClientId === client.id ? 'bg-primary/5' : ''}`}
+                                    onClick={() => handleSelect(client.id.toString())}
+                                    className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-primary/10 transition-colors flex flex-col ${selectedClientId === client.id.toString() ? 'bg-primary/5' : ''}`}
                                 >
-                                    <span className={`font-bold ${selectedClientId === client.id ? 'text-primary' : 'text-text-main'}`}>
+                                    <span className={`font-bold ${selectedClientId === client.id.toString() ? 'text-primary' : 'text-text-main'}`}>
                                         {client.name}
                                     </span>
-                                    <span className="text-xs text-text-muted">{client.taxId || 'Sin RUC'}</span>
+                                    <span className="text-xs text-text-muted">{client.ruc || 'Sin RUC'}</span>
                                 </div>
                             ))
                         ) : (

@@ -10,11 +10,11 @@ const invoiceService = {
         const response = await apiClient.get<Invoice>(`/invoices/${id}`);
         return response.data;
     },
-    create: async (invoice: Omit<Invoice, 'id' | 'clientName'>) => {
+    create: async (invoice: any) => {
         const response = await apiClient.post<Invoice>('/invoices', invoice);
         return response.data;
     },
-    update: async (id: string, invoice: Partial<Invoice>) => {
+    update: async (id: string, invoice: any) => {
         const response = await apiClient.put<Invoice>(`/invoices/${id}`, invoice);
         return response.data;
     },

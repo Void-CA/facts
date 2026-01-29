@@ -27,6 +27,7 @@ public static class ClientEndpoints
             client.Address = updated.Address;
             client.Phone = updated.Phone;
             client.RUC = updated.RUC;
+            client.Email = updated.Email;
 
             await db.SaveChangesAsync();
             return Results.NoContent();

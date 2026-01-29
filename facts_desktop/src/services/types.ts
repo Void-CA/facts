@@ -1,32 +1,33 @@
 export interface Client {
-    id: string;
+    id: number; // Changed to number to match int Id
     name: string;
     email: string;
     phone: string;
     address: string;
-    taxId: string;
+    ruc: string; // Changed from taxId to match RUC
     createdAt?: string;
 }
 
 export interface Invoice {
-    id: string;
-    invoiceNumber: string;
-    date: string;
-    dueDate: string;
-    clientId: string;
+    id: number; // Changed to number
+    clientId: number;
     clientName?: string;
-    items: InvoiceItem[];
-    subtotal: number;
-    tax: number;
+    provider?: string;
+    emittedDate: string; // Changed from date
+    expireDate?: string; // Changed from dueDate
+    state: string; // Changed from status
+    invoiceType: string;
+    printNumber: number; // Changed from invoiceNumber and to number
+    description?: string; // Changed from notes
+    services: InvoiceItem[]; // Changed from items
     calcTotal: number;
-    status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
-    notes?: string;
 }
 
 export interface InvoiceItem {
-    id: string;
-    description: string;
+    id: number; // Changed to number
+    invoiceId?: number;
+    specification: string; // Changed from description
     quantity: number;
-    unitPrice: number;
-    total: number;
+    price: number; // Changed from unitPrice
+    subtotal: number;
 }

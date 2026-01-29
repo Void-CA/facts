@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import clientService from '../services/clientService';
 import { Client } from '../services/types';
 import { Plus, Edit2, Trash2, Mail, Phone, MapPin, Search } from 'lucide-react';
+import ClientForm from '../components/forms/ClientForm';
 
 const Clients: React.FC = () => {
     const [clients, setClients] = useState<Client[]>([]);
@@ -9,13 +10,6 @@ const Clients: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
-    const [formData, setFormData] = useState<Omit<Client, 'id' | 'createdAt'>>({
-        name: '',
-        email: '',
-        phone: '',
-        address: '',
-        taxId: ''
-    });
 
     useEffect(() => {
         fetchClients();
@@ -33,27 +27,25 @@ const Clients: React.FC = () => {
         }
     };
 
-    const handleSumbit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleFormSubmit = async (data: any) => {
         try {
             if (editingClient) {
-                await clientService.update(editingClient.id, formData);
+                await clientService.update(editingClient.id.toString(), data);
             } else {
-                await clientService.create(formData);
+                await clientService.create(data);
             }
             setShowModal(false);
             setEditingClient(null);
-            setFormData({ name: '', email: '', phone: '', address: '', taxId: '' });
             fetchClients();
         } catch (error) {
             console.error('Operation failed');
         }
     };
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = async (id: number) => {
         if (confirm('¿Estás seguro de eliminar este cliente?')) {
             try {
-                await clientService.delete(id);
+                await clientService.delete(id.toString());
                 fetchClients();
             } catch (error) {
                 console.error('Delete failed');
@@ -63,20 +55,13 @@ const Clients: React.FC = () => {
 
     const openEdit = (client: Client) => {
         setEditingClient(client);
-        setFormData({
-            name: client.name,
-            email: client.email,
-            phone: client.phone,
-            address: client.address,
-            taxId: client.taxId
-        });
         setShowModal(true);
     };
 
     const filteredClients = clients.filter(c =>
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.taxId.toLowerCase().includes(searchTerm.toLowerCase())
+        c.ruc.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -84,7 +69,7 @@ const Clients: React.FC = () => {
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-text-main tracking-tight">Clientes</h1>
                 <button
-                    onClick={() => { setEditingClient(null); setFormData({ name: '', email: '', phone: '', address: '', taxId: '' }); setShowModal(true); }}
+                    onClick={() => { setEditingClient(null); setShowModal(true); }}
                     className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
                 >
                     <Plus size={20} />
@@ -114,29 +99,31 @@ const Clients: React.FC = () => {
                                     {client.name.charAt(0)}
                                 </div>
                                 <div className="flex gap-2">
-                                    <button onClick={() => openEdit(client)} className="p-2 text-text-muted hover:text-primary transition-colors">
+                                    <button onClick={() => openEdit(client)} className="p-2 text-text-muted hover:text-primary transition-colors hover:bg-primary/5 rounded-lg">
                                         <Edit2 size={18} />
                                     </button>
-                                    <button onClick={() => handleDelete(client.id)} className="p-2 text-text-muted hover:text-red-500 transition-colors">
+                                    <button onClick={() => handleDelete(client.id)} className="p-2 text-text-muted hover:text-red-500 transition-colors hover:bg-red-50 rounded-lg">
                                         <Trash2 size={18} />
                                     </button>
                                 </div>
                             </div>
                             <h3 className="text-lg font-bold text-text-main mb-1">{client.name}</h3>
-                            <p className="text-xs text-text-muted font-medium mb-4 uppercase tracking-wider">{client.taxId || 'Sin ID Fiscal'}</p>
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider bg-background px-2 py-0.5 rounded border border-border">RUC: {client.ruc || 'Sin ID'}</span>
+                            </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-3 pt-3 border-t border-border/50">
                                 <div className="flex items-center gap-2 text-sm text-text-muted">
-                                    <Mail size={14} />
-                                    {client.email}
+                                    <Mail size={14} className="text-primary/60" />
+                                    <span className="truncate">{client.email}</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-text-muted">
-                                    <Phone size={14} />
+                                    <Phone size={14} className="text-primary/60" />
                                     {client.phone}
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-text-muted">
-                                    <MapPin size={14} />
-                                    <span className="truncate">{client.address}</span>
+                                    <MapPin size={14} className="text-primary/60" />
+                                    <span className="line-clamp-1">{client.address}</span>
                                 </div>
                             </div>
                         </div>
@@ -151,77 +138,14 @@ const Clients: React.FC = () => {
 
             {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl transition-all duration-300 transform scale-100">
-                        <div className="p-6 border-b border-border">
-                            <h2 className="text-xl font-bold text-text-main">{editingClient ? 'Editar Cliente' : 'Nuevo Cliente'}</h2>
-                        </div>
-                        <form onSubmit={handleSumbit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-text-muted mb-1">Nombre Completo</label>
-                                <input
-                                    required
-                                    type="text"
-                                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-text-main"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-text-muted mb-1">Email</label>
-                                    <input
-                                        required
-                                        type="email"
-                                        className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-text-main"
-                                        value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-text-muted mb-1">Teléfono</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-text-main"
-                                        value={formData.phone}
-                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-text-muted mb-1">Dirección</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-text-main"
-                                    value={formData.address}
-                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-text-muted mb-1">RUC</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-text-main"
-                                    value={formData.taxId}
-                                    onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
-                                />
-                            </div>
-                            <div className="flex gap-3 mt-6">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowModal(false)}
-                                    className="flex-1 py-2 border border-border text-text-muted rounded-lg hover:bg-primary/5 transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-all shadow-lg shadow-primary/20"
-                                >
-                                    {editingClient ? 'Guardar Cambios' : 'Crear Cliente'}
-                                </button>
-                            </div>
-                        </form>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+                    <div className="w-full max-w-4xl my-8">
+                        <ClientForm
+                            initialData={editingClient || undefined}
+                            onSubmit={handleFormSubmit}
+                            onCancel={() => setShowModal(false)}
+                            isEdit={!!editingClient}
+                        />
                     </div>
                 </div>
             )}

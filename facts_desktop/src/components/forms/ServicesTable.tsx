@@ -58,8 +58,8 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
                                     </td>
                                     <td className="px-4 py-3 align-top">
                                         <textarea
-                                            value={item.description}
-                                            onChange={(e) => onUpdate(index, 'description', e.target.value)}
+                                            value={item.specification}
+                                            onChange={(e) => onUpdate(index, 'specification', e.target.value)}
                                             className="w-full bg-transparent text-text-main focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 transition-all resize-none min-h-[38px] overflow-hidden"
                                             placeholder="Describa el servicio..."
                                             rows={1}
@@ -82,15 +82,15 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
                                             <input
                                                 type="number"
                                                 step="0.01"
-                                                value={item.unitPrice}
-                                                onChange={(e) => onUpdate(index, 'unitPrice', e.target.value)}
+                                                value={item.price}
+                                                onChange={(e) => onUpdate(index, 'price', e.target.value)}
                                                 className="w-full bg-transparent text-text-main font-bold focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 transition-all"
                                             />
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 text-right align-top">
                                         <span className="text-text-main font-bold">
-                                            ${item.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                            ${(item.subtotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-center align-top">

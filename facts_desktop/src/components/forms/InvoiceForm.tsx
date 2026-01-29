@@ -3,24 +3,11 @@ import FormLayout from '../FormLayout';
 import ServicesTable from './ServicesTable';
 import ClientSelect from './ClientSelect';
 import ThemedSelect from './ThemedSelect';
-import { Client, InvoiceItem } from '../../services/types';
+import { Client, Invoice, InvoiceItem } from '../../services/types';
 import { User, Calendar, FileText, Info } from 'lucide-react';
 
-interface InvoiceFormData {
-    invoiceNumber: string;
-    date: string;
-    dueDate: string;
-    clientId: string;
-    items: InvoiceItem[];
-    notes: string;
-    status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
-    printNumber?: string;
-    invoiceType?: string;
-    provider?: string;
-}
-
 interface InvoiceFormProps {
-    initialData?: Partial<InvoiceFormData>;
+    initialData?: Partial<Invoice>;
     clients: Client[];
     onSubmit: (data: any) => void;
     onCancel: () => void;
@@ -34,92 +21,93 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     onCancel,
     isEdit = false
 }) => {
-    const [formData, setFormData] = useState<InvoiceFormData>({
-        invoiceNumber: initialData?.invoiceNumber || '',
-        date: initialData?.date || new Date().toISOString().split('T')[0],
-        dueDate: initialData?.dueDate || new Date().toISOString().split('T')[0],
-        clientId: initialData?.clientId || '',
-        items: initialData?.items || [
-            { id: '1', description: '', quantity: 1, unitPrice: 0, total: 0 }
-        ],
-        notes: initialData?.notes || '',
-        status: initialData?.status || 'Draft',
-        printNumber: initialData?.printNumber || '',
-        invoiceType: initialData?.invoiceType || 'Factura A',
-        provider: initialData?.provider || ''
+    const [formData, setFormData] = useState<Omit<Invoice, 'id' | 'calcTotal'>>({
+        clientId: initialData?.clientId || 0,
+        emittedDate: initialData?.emittedDate || new Date().toISOString().split('T')[0],
+        expireDate: initialData?.expireDate || new Date().toISOString().split('T')[0],
+        state: initialData?.state || 'pendiente',
+        invoiceType: initialData?.invoiceType || 'Ingreso',
+        printNumber: initialData?.printNumber || 0,
+        description: initialData?.description || '',
+        provider: initialData?.provider || '',
+        services: initialData?.services || [
+            { id: 0, specification: '', quantity: 1, price: 0, subtotal: 0 }
+        ]
     });
 
     const [total, setTotal] = useState(0);
 
     useEffect(() => {
-        const newTotal = formData.items.reduce((sum, item) => sum + item.total, 0);
+        const newTotal = formData.services.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0);
         setTotal(newTotal);
-    }, [formData.items]);
+    }, [formData.services]);
 
     const handleUpdateItem = (index: number, field: string, value: any) => {
-        const newItems = [...formData.items];
-        const item = { ...newItems[index] };
+        const newServices = [...formData.services];
+        const item = { ...newServices[index] };
 
         // Actualizamos el campo específico
         (item as any)[field] = value;
 
-        // Recalculamos el total del item si cambió precio o cantidad
-        if (field === 'quantity' || field === 'unitPrice') {
-            item.total = (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0);
+        // Recalculamos el subtotal del item si cambió precio o cantidad
+        if (field === 'quantity' || field === 'price') {
+            item.subtotal = (Number(item.quantity) || 0) * (Number(item.price) || 0);
         }
 
-        newItems[index] = item;
-        setFormData({ ...formData, items: newItems });
+        newServices[index] = item;
+        setFormData({ ...formData, services: newServices });
     };
 
     const handleAddItem = () => {
         const newItem: InvoiceItem = {
-            id: (formData.items.length + 1).toString(),
-            description: '',
+            id: 0,
+            specification: '',
             quantity: 1,
-            unitPrice: 0,
-            total: 0
+            price: 0,
+            subtotal: 0
         };
-        setFormData({ ...formData, items: [...formData.items, newItem] });
+        setFormData({ ...formData, services: [...formData.services, newItem] });
     };
 
     const handleRemoveItem = (index: number) => {
-        if (formData.items.length === 1) {
-            handleUpdateItem(0, 'description', '');
+        if (formData.services.length === 1) {
+            handleUpdateItem(0, 'specification', '');
             handleUpdateItem(0, 'quantity', 1);
-            handleUpdateItem(0, 'unitPrice', 0);
+            handleUpdateItem(0, 'price', 0);
             return;
         }
-        const newItems = formData.items.filter((_, i) => i !== index);
-        setFormData({ ...formData, items: newItems });
+        const newServices = formData.services.filter((_, i) => i !== index);
+        setFormData({ ...formData, services: newServices });
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const subtotal = formData.items.reduce((sum, item) => sum + item.total, 0);
-        const tax = subtotal * 0.16;
-        const calcTotal = subtotal + tax;
 
-        onSubmit({
+        // Prepare payload for backend
+        const payload = {
             ...formData,
-            subtotal,
-            tax,
-            calcTotal
-        });
+            clientId: Number(formData.clientId),
+            printNumber: Number(formData.printNumber),
+            services: formData.services.map(s => ({
+                ...s,
+                quantity: Number(s.quantity) || 0,
+                price: Number(s.price) || 0
+            }))
+        };
+
+        onSubmit(payload);
     };
 
     const typeOptions = [
-        { value: 'Factura A', label: 'Factura A' },
-        { value: 'Factura B', label: 'Factura B' },
-        { value: 'Recibo', label: 'Recibo' }
+        { value: 'Ingreso', label: 'Ingreso' },
+        { value: 'Egreso', label: 'Egreso' },
+        { value: 'Caja', label: 'Caja' }
     ];
 
-    const statusOptions = [
-        { value: 'Draft', label: 'Borrador' },
-        { value: 'Paid', label: 'Pagada' },
-        { value: 'Overdue', label: 'Vencida' },
-        { value: 'Sent', label: 'Enviada' },
-        { value: 'Cancelled', label: 'Cancelada' }
+    const stateOptions = [
+        { value: 'pendiente', label: 'Pendiente' },
+        { value: 'pagado', label: 'Pagada' },
+        { value: 'cancelado', label: 'Cancelada' }
     ];
 
     return (
@@ -142,8 +130,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Nombre del Cliente</label>
                         <ClientSelect
                             clients={clients}
-                            selectedClientId={formData.clientId}
-                            onSelect={(id: string) => setFormData({ ...formData, clientId: id })}
+                            selectedClientId={formData.clientId.toString()}
+                            onSelect={(id: string) => setFormData({ ...formData, clientId: Number(id) })}
                         />
                     </div>
                 </div>
@@ -159,8 +147,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                             <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Emisión</label>
                             <input
                                 type="date"
-                                value={formData.date}
-                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                value={formData.emittedDate.split('T')[0]}
+                                onChange={(e) => setFormData({ ...formData, emittedDate: e.target.value })}
                                 className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                                 required
                             />
@@ -169,8 +157,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                             <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Vencimiento</label>
                             <input
                                 type="date"
-                                value={formData.dueDate}
-                                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                                value={formData.expireDate?.split('T')[0] || ''}
+                                onChange={(e) => setFormData({ ...formData, expireDate: e.target.value })}
                                 className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                                 required
                             />
@@ -188,9 +176,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Nº Imp.</label>
                             <input
-                                type="text"
-                                value={formData.printNumber}
-                                onChange={(e) => setFormData({ ...formData, printNumber: e.target.value })}
+                                type="number"
+                                value={formData.printNumber || ''}
+                                onChange={(e) => setFormData({ ...formData, printNumber: Number(e.target.value) })}
                                 className="w-full bg-surface border border-border rounded-lg px-2 py-2 text-sm text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                                 placeholder="001..."
                             />
@@ -200,7 +188,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                             <ThemedSelect
                                 size="sm"
                                 options={typeOptions}
-                                value={formData.invoiceType || ''}
+                                value={formData.invoiceType}
                                 onChange={(val) => setFormData({ ...formData, invoiceType: val })}
                             />
                         </div>
@@ -208,9 +196,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                             <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Estado</label>
                             <ThemedSelect
                                 size="sm"
-                                options={statusOptions}
-                                value={formData.status}
-                                onChange={(val) => setFormData({ ...formData, status: val as any })}
+                                options={stateOptions}
+                                value={formData.state}
+                                onChange={(val) => setFormData({ ...formData, state: val as any })}
                             />
                         </div>
                     </div>
@@ -223,7 +211,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 {/* Tabla de Servicios */}
                 <div className="lg:col-span-8 bg-background rounded-2xl p-6 border border-border/50 flex flex-col">
                     <ServicesTable
-                        items={formData.items}
+                        items={formData.services}
                         onUpdate={handleUpdateItem}
                         onRemove={handleRemoveItem}
                         onAdd={handleAddItem}
@@ -249,10 +237,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Notas</label>
+                                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Notas / Descripción</label>
                                 <textarea
-                                    value={formData.notes}
-                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-text-main h-32 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none"
                                     placeholder="Notas adicionales..."
                                 />
@@ -266,12 +254,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                             <span className="font-bold">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                         <div className="flex justify-between items-center mb-4 pb-4 border-b border-white/20 text-sm">
-                            <span className="text-white/80">IVA (16%)</span>
-                            <span>${(total * 0.16).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <span className="text-white/80">IVA (Incluido)</span>
+                            <span>$0.00</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-xl font-bold">Total</span>
-                            <span className="text-3xl font-black">${(total * 1.16).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <span className="text-3xl font-black">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                     </div>
                 </div>
