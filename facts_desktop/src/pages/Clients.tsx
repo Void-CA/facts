@@ -1,45 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import clientService from '../services/clientService';
-import { Client } from '../services/types';
+import React, { useState } from 'react';
 import { Plus, Search } from 'lucide-react';
 import ClientForm from '../components/forms/ClientForm';
 import ConfirmModal from '../components/ConfirmModal';
 import ClientCard from '../components/clients/ClientCard';
+import { useClients } from '../hooks/useClients';
+import { Client } from '../services/types';
 
 const Clients: React.FC = () => {
-    const [clients, setClients] = useState<Client[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { clients, loading, addClient, updateClient, deleteClient } = useClients();
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
-    useEffect(() => {
-        fetchClients();
-    }, []);
-
-    const fetchClients = async () => {
-        try {
-            setLoading(true);
-            const data = await clientService.getAll();
-            setClients(data);
-        } catch (error) {
-            console.error('Failed to fetch clients');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleFormSubmit = async (data: any) => {
         try {
             if (editingClient) {
-                await clientService.update(editingClient.id.toString(), data);
+                await updateClient(editingClient.id.toString(), data);
             } else {
-                await clientService.create(data);
+                await addClient(data);
             }
             setShowModal(false);
             setEditingClient(null);
-            fetchClients();
         } catch (error) {
             console.error('Operation failed');
         }
@@ -48,9 +30,8 @@ const Clients: React.FC = () => {
     const handleDelete = async () => {
         if (!clientToDelete) return;
         try {
-            await clientService.delete(clientToDelete.id.toString());
+            await deleteClient(clientToDelete.id.toString());
             setClientToDelete(null);
-            fetchClients();
         } catch (error) {
             console.error('Delete failed');
         }

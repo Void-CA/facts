@@ -1,52 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import invoiceService from '../services/invoiceService';
-import clientService from '../services/clientService';
-import { Invoice, Client } from '../services/types';
+import React, { useState } from 'react';
 import { Plus, Filter } from 'lucide-react';
 import InvoiceForm from '../components/forms/InvoiceForm';
 import ConfirmModal from '../components/ConfirmModal';
 import InvoiceTable from '../components/invoices/InvoiceTable';
 import InvoiceDetail from '../components/invoices/InvoiceDetail';
+import { useInvoices } from '../hooks/useInvoices';
+import { Invoice } from '../services/types';
 
 const Invoices: React.FC = () => {
-    const [invoices, setInvoices] = useState<Invoice[]>([]);
-    const [clients, setClients] = useState<Client[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { invoices, clients, loading, addInvoice, updateInvoice, deleteInvoice } = useInvoices();
     const [showModal, setShowModal] = useState(false);
     const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
     const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
     const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
-        try {
-            setLoading(true);
-            const [invoiceData, clientData] = await Promise.all([
-                invoiceService.getAll(),
-                clientService.getAll()
-            ]);
-            setInvoices(invoiceData);
-            setClients(clientData);
-        } catch (error) {
-            console.error('Failed to fetch data');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleFormSubmit = async (data: any) => {
         try {
             if (editingInvoice) {
-                await invoiceService.update(editingInvoice.id.toString(), data);
+                await updateInvoice(editingInvoice.id.toString(), data);
             } else {
-                await invoiceService.create(data);
+                await addInvoice(data);
             }
             setShowModal(false);
             setEditingInvoice(null);
-            fetchData();
         } catch (error) {
             console.error('Operation failed');
         }
@@ -55,9 +31,8 @@ const Invoices: React.FC = () => {
     const handleDelete = async () => {
         if (!invoiceToDelete) return;
         try {
-            await invoiceService.delete(invoiceToDelete.id.toString());
+            await deleteInvoice(invoiceToDelete.id.toString());
             setInvoiceToDelete(null);
-            fetchData();
         } catch (error) {
             console.error('Delete failed');
         }
