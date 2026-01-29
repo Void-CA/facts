@@ -96,7 +96,7 @@ const Clients: React.FC = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={20} />
                 <input
                     type="text"
-                    placeholder="Buscar por nombre, email o RFC/TaxID..."
+                    placeholder="Buscar por nombre, email o RUC..."
                     className="w-full pl-10 pr-4 py-2 bg-surface border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 text-text-main transition-all"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -198,7 +198,7 @@ const Clients: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-text-muted mb-1">ID Fiscal / RFC</label>
+                                <label className="block text-sm font-medium text-text-muted mb-1">RUC</label>
                                 <input
                                     type="text"
                                     className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-text-main"

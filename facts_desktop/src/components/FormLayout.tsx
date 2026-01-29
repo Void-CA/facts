@@ -18,7 +18,7 @@ const FormLayout: React.FC<FormLayoutProps> = ({
     isEdit = false
 }) => {
     return (
-        <div className="bg-surface p-8 rounded-2xl border border-border shadow-xl w-full max-w-6xl mx-auto transition-all duration-300">
+        <div className="bg-surface p-8 rounded-2xl border border-border shadow-xl w-full max-w-7xl mx-auto transition-all duration-300">
             <h1 className="text-3xl font-bold text-text-main mb-8 tracking-tight">
                 {isEdit ? 'Editar' : 'Crear'} {title}
             </h1>

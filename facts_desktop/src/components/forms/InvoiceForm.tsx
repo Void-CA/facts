@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import FormLayout from '../FormLayout';
-import ServiceItem from './ServiceItem';
+import ServicesTable from './ServicesTable';
+import ClientSelect from './ClientSelect';
+import ThemedSelect from './ThemedSelect';
 import { Client, InvoiceItem } from '../../services/types';
-import { User, Calendar, FileText, Info, Plus } from 'lucide-react';
+import { User, Calendar, FileText, Info } from 'lucide-react';
 
 interface InvoiceFormData {
     invoiceNumber: string;
@@ -56,16 +58,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
     const handleUpdateItem = (index: number, field: string, value: any) => {
         const newItems = [...formData.items];
-        const item = { ...newItems[index], [field]: value };
+        const item = { ...newItems[index] };
 
-        if (field === 'quantity') {
-            item.quantity = value;
-            item.total = value * item.unitPrice;
-        } else if (field === 'unitPrice') {
-            item.unitPrice = value;
-            item.total = item.quantity * value;
-        } else {
-            (item as any)[field] = value;
+        // Actualizamos el campo específico
+        (item as any)[field] = value;
+
+        // Recalculamos el total del item si cambió precio o cantidad
+        if (field === 'quantity' || field === 'unitPrice') {
+            item.total = (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0);
         }
 
         newItems[index] = item;
@@ -108,6 +108,20 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         });
     };
 
+    const typeOptions = [
+        { value: 'Factura A', label: 'Factura A' },
+        { value: 'Factura B', label: 'Factura B' },
+        { value: 'Recibo', label: 'Recibo' }
+    ];
+
+    const statusOptions = [
+        { value: 'Draft', label: 'Borrador' },
+        { value: 'Paid', label: 'Pagada' },
+        { value: 'Overdue', label: 'Vencida' },
+        { value: 'Sent', label: 'Enviada' },
+        { value: 'Cancelled', label: 'Cancelada' }
+    ];
+
     return (
         <FormLayout
             title="Factura"
@@ -126,17 +140,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Nombre del Cliente</label>
-                        <select
-                            value={formData.clientId}
-                            onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                            className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                            required
-                        >
-                            <option value="">Seleccionar cliente...</option>
-                            {clients.map(client => (
-                                <option key={client.id} value={client.id}>{client.name}</option>
-                            ))}
-                        </select>
+                        <ClientSelect
+                            clients={clients}
+                            selectedClientId={formData.clientId}
+                            onSelect={(id: string) => setFormData({ ...formData, clientId: id })}
+                        />
                     </div>
                 </div>
 
@@ -189,27 +197,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         </div>
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tipo</label>
-                            <select
-                                value={formData.invoiceType}
-                                onChange={(e) => setFormData({ ...formData, invoiceType: e.target.value })}
-                                className="w-full bg-surface border border-border rounded-lg px-2 py-2 text-sm text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                            >
-                                <option value="Factura A">Factura A</option>
-                                <option value="Factura B">Factura B</option>
-                                <option value="Recibo">Recibo</option>
-                            </select>
+                            <ThemedSelect
+                                size="sm"
+                                options={typeOptions}
+                                value={formData.invoiceType || ''}
+                                onChange={(val) => setFormData({ ...formData, invoiceType: val })}
+                            />
                         </div>
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Estado</label>
-                            <select
+                            <ThemedSelect
+                                size="sm"
+                                options={statusOptions}
                                 value={formData.status}
-                                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                                className="w-full bg-surface border border-border rounded-lg px-2 py-2 text-sm text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                            >
-                                <option value="Draft">Borrador</option>
-                                <option value="Paid">Pagada</option>
-                                <option value="Overdue">Vencida</option>
-                            </select>
+                                onChange={(val) => setFormData({ ...formData, status: val as any })}
+                            />
                         </div>
                     </div>
                 </div>
@@ -218,37 +220,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             {/* Grid Inferior: Servicios y Notas */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-                {/* Servicios */}
+                {/* Tabla de Servicios */}
                 <div className="lg:col-span-8 bg-background rounded-2xl p-6 border border-border/50 flex flex-col">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                                <Plus className="text-primary" size={18} />
-                            </div>
-                            <h2 className="font-bold text-text-main">Servicios / Conceptos</h2>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={handleAddItem}
-                            className="text-primary text-sm font-bold hover:underline underline-offset-4 flex items-center gap-1"
-                        >
-                            <Plus size={16} /> Agregar concepto
-                        </button>
-                    </div>
-
-                    <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                        {formData.items.map((item, index) => (
-                            <ServiceItem
-                                key={index}
-                                index={index}
-                                quantity={item.quantity}
-                                specification={item.description}
-                                price={item.unitPrice}
-                                onUpdate={handleUpdateItem}
-                                onRemove={handleRemoveItem}
-                            />
-                        ))}
-                    </div>
+                    <ServicesTable
+                        items={formData.items}
+                        onUpdate={handleUpdateItem}
+                        onRemove={handleRemoveItem}
+                        onAdd={handleAddItem}
+                    />
                 </div>
 
                 {/* Notas y Total */}
