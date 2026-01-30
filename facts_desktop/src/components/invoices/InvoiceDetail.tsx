@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Printer, User, Calendar, Landmark, CreditCard, FileText, Hash, ReceiptText } from 'lucide-react';
+import { X, Printer, User, Calendar, Landmark, CreditCard, FileText, Hash, ReceiptText, CheckCircle, AlertCircle } from 'lucide-react';
 import { Invoice, Client } from '../../services/types';
 import printService from '../../services/printService';
 import PrintModal from '../print/PrintModal';
@@ -34,7 +34,7 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({
 
             // Si llega aquí, el backend respondió 200 OK
             setPrintStatus({ type: 'success', msg: '¡Impresión enviada con éxito!' });
-            
+
             // Cerramos el modal después de un pequeño delay para que vean el éxito
             setTimeout(() => setShowPrintModal(false), 2000);
 
@@ -42,13 +42,13 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({
             console.error('Print failed:', error);
 
             // Extraemos el mensaje real que configuramos en el backend
-            const serverErrorMessage = error.response?.data?.detail 
-                || error.response?.data?.error 
+            const serverErrorMessage = error.response?.data?.detail
+                || error.response?.data?.error
                 || 'Error desconocido en el servidor';
 
-            setPrintStatus({ 
-                type: 'error', 
-                msg: `Fallo de impresión: ${serverErrorMessage}` 
+            setPrintStatus({
+                type: 'error',
+                msg: `Fallo de impresión: ${serverErrorMessage}`
             });
 
         } finally {
@@ -259,6 +259,31 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({
                 onConfirm={handleConfirmPrint}
                 loading={printing}
             />
+
+            {/* Custom Toast Notification */}
+            {printStatus && (
+                <div className={`fixed bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-4 px-6 py-4 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-[100] animate-in slide-in-from-bottom-8 fade-in duration-300 border backdrop-blur-md ${printStatus.type === 'success'
+                    ? 'bg-green-100/90 dark:bg-green-500/20 text-green-700 dark:text-green-200 border-green-200 dark:border-green-500/30'
+                    : 'bg-red-100/90 dark:bg-red-500/20 text-red-700 dark:text-red-200 border-red-200 dark:border-red-500/30'
+                    }`}>
+                    <div className={`p-2 rounded-full ${printStatus.type === 'success' ? 'bg-green-200/50 dark:bg-green-500/20' : 'bg-red-200/50 dark:bg-red-500/20'}`}>
+                        {printStatus.type === 'success' ? <CheckCircle size={24} className="text-green-600 dark:text-green-400" /> : <AlertCircle size={24} className="text-red-600 dark:text-red-400" />}
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="font-black text-sm uppercase tracking-wider opacity-80">{printStatus.type === 'success' ? 'Éxito' : 'Error'}</span>
+                        <span className="text-base font-bold">{printStatus.msg}</span>
+                    </div>
+                    <button
+                        onClick={() => setPrintStatus(null)}
+                        className={`ml-4 p-2 rounded-xl transition-colors ${printStatus.type === 'success'
+                            ? 'hover:bg-green-200 dark:hover:bg-green-500/20 text-green-700 dark:text-green-300'
+                            : 'hover:bg-red-200 dark:hover:bg-red-500/20 text-red-700 dark:text-red-300'
+                            }`}
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+            )}
         </div >
     );
 };

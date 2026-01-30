@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import printService, { PrintLayout, LayoutFields, PrintField } from '../../services/printService';
-import { Monitor, Printer, Check, List } from 'lucide-react';
+import { Monitor, Printer, Loader2, Eye, LayoutTemplate, Settings2 } from 'lucide-react';
 import FormLayout from '../FormLayout';
 
 interface LayoutEditorProps {
@@ -22,7 +22,7 @@ const defaultFields: LayoutFields = {
     descripcion: { x: 10, y: 60, enabled: true },
     // Campos añadidos para el cuerpo de la factura
     servicios: { x: 10, y: 80, enabled: true, fontSize: 9 },
-    rowHeight: 8 
+    rowHeight: 8
 };
 
 const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel }) => {
@@ -35,6 +35,30 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
     );
     const [printers, setPrinters] = useState<string[]>([]);
     const [loadingPrinters, setLoadingPrinters] = useState(false);
+    // 1. Añade estos estados
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+
+    // 2. Efecto para actualizar la preview cuando cambien los campos
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            generatePreview();
+        }, 800); // Espera 800ms después de que el usuario deje de escribir
+        return () => clearTimeout(timer);
+    }, [fields, pageWidth, pageHeight]);
+
+    const generatePreview = async () => {
+        try {
+            setIsGeneratingPreview(true);
+            // Usamos una factura de ejemplo (ID 1) para la previa
+            const base64 = await printService.getPreview(1, layout?.id || 0);
+            setPreviewUrl(`data:image/png;base64,${base64}`);
+        } catch (err) {
+            console.error("Error generando preview", err);
+        } finally {
+            setIsGeneratingPreview(false);
+        }
+    };
 
     useEffect(() => {
         loadPrinters();
@@ -128,7 +152,7 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
                                 className="w-full px-3 py-1.5 bg-background border border-border rounded-lg text-sm"
                             />
                         </div>
-                        
+
                         {/* Input especial para rowHeight si estamos en el campo servicios */}
                         {key === 'servicios' && (
                             <div className="col-span-full pt-2 border-t border-border mt-2">
@@ -155,89 +179,182 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
             onCancel={onCancel}
             isEdit={!!layout}
         >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Ajustes Generales */}
-                <div className="space-y-6">
-                    <h3 className="text-lg font-bold text-text-main flex items-center gap-2">
-                        <Monitor size={20} className="text-primary" />
-                        Configuración General
-                    </h3>
+            <div className="flex flex-col xl:flex-row gap-8 items-start">
+                {/* Left Panel: Configuration */}
+                <div className="flex-1 w-full space-y-8 min-w-0">
 
-                    <div className="space-y-4 bg-surface/30 p-5 rounded-2xl border border-border">
-                        <div>
-                            <label className="block text-sm font-medium text-text-main mb-1">Nombre del Layout</label>
-                            <input
-                                type="text"
-                                required
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:border-primary transition-all"
-                                placeholder="Ej. Ticket Térmico 80mm"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-text-main mb-1">Ancho (mm)</label>
-                                <input
-                                    type="number"
-                                    required
-                                    value={pageWidth}
-                                    onChange={(e) => setPageWidth(parseFloat(e.target.value))}
-                                    className="w-full px-4 py-2 bg-background border border-border rounded-xl"
-                                />
+                    {/* General Settings Card */}
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-black text-text-main flex items-center gap-2">
+                            <div className="p-2 bg-primary/10 rounded-xl text-primary">
+                                <Settings2 size={20} />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-text-main mb-1">Alto (mm)</label>
-                                <input
-                                    type="number"
-                                    required
-                                    value={pageHeight}
-                                    onChange={(e) => setPageHeight(parseFloat(e.target.value))}
-                                    className="w-full px-4 py-2 bg-background border border-border rounded-xl"
-                                />
+                            Configuración General
+                        </h3>
+
+                        <div className="bg-surface/30 p-6 rounded-[2rem] border border-border space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="col-span-full">
+                                    <label className="block text-xs font-black text-text-muted uppercase tracking-wider mb-2 ml-1">Nombre del Layout</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+                                        placeholder="Ej. Ticket Térmico 80mm"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-black text-text-muted uppercase tracking-wider mb-2 ml-1">Ancho (mm)</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        value={pageWidth}
+                                        onChange={(e) => setPageWidth(parseFloat(e.target.value))}
+                                        className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:border-primary font-bold"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black text-text-muted uppercase tracking-wider mb-2 ml-1">Alto (mm)</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        value={pageHeight}
+                                        onChange={(e) => setPageHeight(parseFloat(e.target.value))}
+                                        className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:border-primary font-bold"
+                                    />
+                                </div>
+
+                                <div className="col-span-full">
+                                    <label className="block text-xs font-black text-text-muted uppercase tracking-wider mb-2 ml-1">Impresora Destino</label>
+                                    <div className="relative">
+                                        <Printer className="absolute left-4 top-1/2 -translate-y-1/2 text-primary opacity-50" size={18} />
+                                        <select
+                                            value={printerName}
+                                            onChange={(e) => setPrinterName(e.target.value)}
+                                            className="w-full pl-12 pr-4 py-3 bg-background border border-border rounded-xl appearance-none focus:border-primary transition-all font-medium"
+                                        >
+                                            <option value="">-- Seleccionar Impresora del Sistema --</option>
+                                            {printers.map(p => <option key={p} value={p}>{p}</option>)}
+                                        </select>
+                                    </div>
+                                    <p className="mt-2 text-[10px] text-text-muted ml-1">Se intentará usar esta impresora automáticamente al imprimir.</p>
+                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-text-main mb-1">Impresora Destino</label>
-                            <div className="relative">
-                                <Printer className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
-                                <select
-                                    value={printerName}
-                                    onChange={(e) => setPrinterName(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-xl appearance-none focus:border-primary transition-all"
-                                >
-                                    <option value="">-- Seleccionar --</option>
-                                    {printers.map(p => <option key={p} value={p}>{p}</option>)}
-                                </select>
+                    {/* Fields Configuration */}
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-black text-text-main flex items-center gap-2">
+                            <div className="p-2 bg-primary/10 rounded-xl text-primary">
+                                <LayoutTemplate size={20} />
+                            </div>
+                            Diseño del Documento
+                        </h3>
+
+                        <div className="bg-surface/30 rounded-[2rem] border border-border overflow-hidden">
+                            <div className="p-2 space-y-2">
+                                {/* Header Section */}
+                                <div className="bg-background/50 rounded-2xl border border-border/50 p-4">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                        <h4 className="text-xs font-black text-text-main uppercase tracking-widest">Cabecera</h4>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {renderFieldInput('cliente', 'Cliente')}
+                                        {renderFieldInput('ruc', 'RUC / CI')}
+                                        {renderFieldInput('fecha', 'Fecha Emisión')}
+                                        {renderFieldInput('numero', 'Nº Factura')}
+                                    </div>
+                                </div>
+
+                                {/* Body Section */}
+                                <div className="bg-background/50 rounded-2xl border border-border/50 p-4">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                                        <h4 className="text-xs font-black text-text-main uppercase tracking-widest">Cuerpo</h4>
+                                    </div>
+                                    {renderFieldInput('servicios', 'Tabla de Servicios')}
+                                </div>
+
+                                {/* Footer Section */}
+                                <div className="bg-background/50 rounded-2xl border border-border/50 p-4">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                        <h4 className="text-xs font-black text-text-main uppercase tracking-widest">Totales y Pie</h4>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {renderFieldInput('total', 'Importe Total')}
+                                        {renderFieldInput('descripcion', 'Observaciones')}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Configuración de Campos */}
-                <div className="space-y-6">
-                    <h3 className="text-lg font-bold text-text-main flex items-center gap-2">
-                        <Check size={20} className="text-primary" />
-                        Campos y Posiciones
-                    </h3>
+                {/* Right Panel: Live Preview */}
+                <div className="xl:w-[480px] flex-shrink-0">
+                    <div className="sticky top-6 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-black text-text-main flex items-center gap-2">
+                                <div className="p-2 bg-primary/10 rounded-xl text-primary">
+                                    <Eye size={20} />
+                                </div>
+                                Vista Previa
+                            </h3>
+                            {isGeneratingPreview && (
+                                <div className="flex items-center gap-2 text-xs font-bold text-primary animate-pulse">
+                                    <Loader2 size={14} className="animate-spin" />
+                                    <span>Actualizando...</span>
+                                </div>
+                            )}
+                        </div>
 
-                    <div className="grid grid-cols-1 gap-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-                        <h4 className="text-[10px] font-black text-text-muted uppercase tracking-widest mt-2">Cabecera</h4>
-                        {renderFieldInput('cliente', 'Cliente')}
-                        {renderFieldInput('ruc', 'RUC / CI')}
-                        {renderFieldInput('fecha', 'Fecha Emisión')}
-                        {renderFieldInput('numero', 'Nº Factura')}
-                        
-                        <h4 className="text-[10px] font-black text-primary uppercase tracking-widest mt-4 flex items-center gap-2">
-                            <List size={12} /> Cuerpo del Documento
-                        </h4>
-                        {renderFieldInput('servicios', 'Tabla de Servicios')}
-                        
-                        <h4 className="text-[10px] font-black text-text-muted uppercase tracking-widest mt-4">Totales y Otros</h4>
-                        {renderFieldInput('total', 'Importe Total')}
-                        {renderFieldInput('descripcion', 'Observaciones')}
+                        <div className="relative w-full bg-zinc-900 border border-border rounded-[2rem] overflow-hidden shadow-2xl shadow-black/20 group">
+                            {/* Paper Background */}
+                            <div className="w-full min-h-[600px] max-h-[85vh] overflow-y-auto custom-scrollbar p-8 flex justify-center bg-[#505050]">
+                                {previewUrl ? (
+                                    <div
+                                        className="bg-white shadow-lg transition-opacity duration-300 relative"
+                                        style={{
+                                            width: `${pageWidth}mm`,
+                                            minHeight: `${pageHeight}mm`,
+                                            maxWidth: '100%',
+                                            opacity: isGeneratingPreview ? 0.7 : 1
+                                        }}
+                                    >
+                                        <img
+                                            src={previewUrl}
+                                            alt="Preview"
+                                            className="w-full h-full object-contain"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center p-12 text-zinc-400">
+                                        <Loader2 size={48} className="animate-spin mb-4 text-zinc-600" />
+                                        <p className="text-sm font-medium">Generando vista previa...</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Overlay Info */}
+                            <div className="absolute bottom-4 right-4 px-4 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 text-white text-[10px] font-mono">
+                                {pageWidth}mm x {pageHeight}mm
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl flex items-start gap-3">
+                            <div className="mt-1 text-primary">
+                                <Monitor size={16} />
+                            </div>
+                            <p className="text-xs text-text-muted leading-relaxed">
+                                <span className="font-bold text-primary">Nota:</span> Esta vista previa usa datos de ejemplo. La impresión real puede variar ligeramente dependiendo de los drivers de la impresora.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -82,7 +82,11 @@ public static class PrintEndpoints
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Print error: {ex.Message}");
+                return Results.Problem(
+                    detail: ex.Message, 
+                    title: "Fallo en el Sistema de Impresión",
+                    statusCode: 500
+                );
             }
         });
 
