@@ -3,11 +3,11 @@ import BaseLayout from './layout/BaseLayout';
 import Home from './pages/Home';
 import Invoices from './pages/Invoices';
 import Clients from './pages/Clients';
+import Export from './pages/Export';
 import "./App.css"
 
 // Dummy components for remaining routes
 const Stats = () => <h1 className="text-3xl font-bold text-text-main tracking-tight">Estadísticas</h1>;
-const Export = () => <h1 className="text-3xl font-bold text-text-main tracking-tight">Exportación</h1>;
 const Notifications = () => <h1 className="text-3xl font-bold text-text-main tracking-tight">Notificaciones</h1>;
 const Profile = () => <h1 className="text-3xl font-bold text-text-main tracking-tight">Perfil</h1>;
 const Settings = () => <h1 className="text-3xl font-bold text-text-main tracking-tight">Ajustes</h1>;

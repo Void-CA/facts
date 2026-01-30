@@ -1,4 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using ClosedXML.Excel;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 public static class InvoiceEndpoints
 {
@@ -13,6 +17,7 @@ public static class InvoiceEndpoints
                 .Include(i => i.Services)
                 .OrderByDescending(i => i.EmittedDate)
                 .ToListAsync());
+
 
         group.MapGet("/{id:int}", async (int id, AppDbContext db) =>
             await db.Invoices
@@ -121,6 +126,152 @@ public static class InvoiceEndpoints
                 .Select(i => i.PrintNumber)
                 .FirstOrDefaultAsync();
             return Results.Ok(lastNumber);
+        });
+
+        group.MapGet("/export", async (string? startDate, string? endDate, string? format, AppDbContext db) =>
+        {
+            Console.WriteLine($"Export requested: start={startDate}, end={endDate}, format={format}");
+            
+            if (string.IsNullOrEmpty(startDate) || string.IsNullOrEmpty(endDate))
+            {
+                return Results.BadRequest("Start or end date missing.");
+            }
+
+            if (!DateTime.TryParse(startDate, out var start) || !DateTime.TryParse(endDate, out var end))
+            {
+                return Results.BadRequest("Invalid date format.");
+            }
+
+            // Inclusive end date
+            end = end.AddDays(1).AddTicks(-1);
+
+            var invoices = await db.Invoices
+                .Include(i => i.Client)
+                .Include(i => i.Services)
+                .Where(i => i.EmittedDate >= start && i.EmittedDate <= end)
+                .OrderBy(i => i.EmittedDate)
+                .ToListAsync();
+
+            if (format?.ToLower() == "csv")
+            {
+                var csv = new System.Text.StringBuilder();
+                csv.AppendLine("Numero,Fecha,Cliente,RUC,Tipo,Proveedor,Total,Estado");
+
+                foreach (var inv in invoices)
+                {
+                    csv.AppendLine($"{inv.PrintNumber},{inv.EmittedDate:yyyy-MM-dd},{inv.Client?.Name},\"{inv.Client?.RUC}\",{inv.InvoiceType},{inv.ProviderName ?? inv.Provider},{inv.Services.Sum(s => s.Quantity * s.Price)},{inv.State}");
+                }
+
+                return Results.File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", $"facturas_{startDate}_{endDate}.csv");
+            }
+            
+            if (format?.ToLower() == "excel")
+            {
+                using var workbook = new ClosedXML.Excel.XLWorkbook();
+                var worksheet = workbook.Worksheets.Add("Facturas");
+                
+                // Headers
+                worksheet.Cell(1, 1).Value = "Número";
+                worksheet.Cell(1, 2).Value = "Fecha";
+                worksheet.Cell(1, 3).Value = "Cliente";
+                worksheet.Cell(1, 4).Value = "RUC";
+                worksheet.Cell(1, 5).Value = "Tipo";
+                worksheet.Cell(1, 6).Value = "Proveedor";
+                worksheet.Cell(1, 7).Value = "Total";
+                worksheet.Cell(1, 8).Value = "Estado";
+
+                var headerRow = worksheet.Row(1);
+                headerRow.Style.Font.Bold = true;
+                headerRow.Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromHtml("#f97316");
+                headerRow.Style.Font.FontColor = ClosedXML.Excel.XLColor.White;
+
+                for (int i = 0; i < invoices.Count; i++)
+                {
+                    var inv = invoices[i];
+                    int row = i + 2;
+                    worksheet.Cell(row, 1).Value = inv.PrintNumber;
+                    worksheet.Cell(row, 2).Value = inv.EmittedDate.ToShortDateString();
+                    worksheet.Cell(row, 3).Value = inv.Client?.Name;
+                    worksheet.Cell(row, 4).Value = inv.Client?.RUC;
+                    worksheet.Cell(row, 5).Value = inv.InvoiceType;
+                    worksheet.Cell(row, 6).Value = inv.ProviderName ?? inv.Provider;
+                    worksheet.Cell(row, 7).Value = inv.Services.Sum(s => s.Quantity * s.Price);
+                    worksheet.Cell(row, 8).Value = inv.State;
+                    worksheet.Cell(row, 7).Style.NumberFormat.Format = "$ #,##0.00";
+                }
+
+                worksheet.Columns().AdjustToContents();
+
+                using var stream = new System.IO.MemoryStream();
+                workbook.SaveAs(stream);
+                return Results.File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"facturas_{startDate}_{endDate}.xlsx");
+            }
+
+            if (format?.ToLower() == "pdf")
+            {
+                QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
+                IContainer CellStyle(IContainer container) => container.DefaultTextStyle(x => x.SemiBold()).PaddingVertical(5).BorderBottom(1).BorderColor("#000000");
+                IContainer ContentStyle(IContainer container) => container.BorderBottom(1).BorderColor("#EEEEEE").PaddingVertical(5);
+
+                var document = QuestPDF.Fluent.Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        page.Margin(1, QuestPDF.Infrastructure.Unit.Centimetre);
+                        page.Header().Row(row =>
+                        {
+                            row.RelativeItem().Column(col =>
+                            {
+                                col.Item().Text("Reporte de Facturación").FontSize(20).SemiBold().FontColor("#f97316");
+                                col.Item().Text($"{startDate} al {endDate}").FontSize(10);
+                            });
+                        });
+
+                        page.Content().PaddingVertical(10).Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.ConstantColumn(50);
+                                columns.ConstantColumn(70);
+                                columns.RelativeColumn();
+                                columns.ConstantColumn(80);
+                                columns.ConstantColumn(60);
+                            });
+
+                            table.Header(header =>
+                            {
+                                header.Cell().Element(CellStyle).Text("#");
+                                header.Cell().Element(CellStyle).Text("Fecha");
+                                header.Cell().Element(CellStyle).Text("Cliente");
+                                header.Cell().Element(CellStyle).Text("Total");
+                                header.Cell().Element(CellStyle).Text("Estado");
+                            });
+
+                            foreach (var inv in invoices)
+                            {
+                                table.Cell().Element(ContentStyle).Text(inv.PrintNumber.ToString());
+                                table.Cell().Element(ContentStyle).Text(inv.EmittedDate.ToShortDateString());
+                                table.Cell().Element(ContentStyle).Text(inv.Client?.Name ?? "N/A");
+                                table.Cell().Element(ContentStyle).Text($"${inv.Services.Sum(s => s.Quantity * s.Price):N2}");
+                                table.Cell().Element(ContentStyle).Text(inv.State);
+                            }
+                        });
+
+                        page.Footer().AlignCenter().Text(x =>
+                        {
+                            x.Span("Página ");
+                            x.CurrentPageNumber();
+                        });
+                    });
+                });
+
+                using var stream = new System.IO.MemoryStream();
+                document.GeneratePdf(stream);
+                return Results.File(stream.ToArray(), "application/pdf", $"facturas_{startDate}_{endDate}.pdf");
+            }
+
+            return Results.BadRequest("Unsupported format.");
         });
     }
 }

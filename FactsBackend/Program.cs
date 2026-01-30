@@ -1,3 +1,4 @@
+// Forced reload trigger
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 

@@ -29,6 +29,13 @@ const invoiceService = {
         const response = await apiClient.get<number>('/invoices/last-print-number');
         return response.data;
     },
+    exportInvoices: async (startDate: string, endDate: string, format: string) => {
+        const response = await apiClient.get('/invoices/export', {
+            params: { startDate, endDate, format },
+            responseType: 'blob'
+        });
+        return response.data;
+    },
 };
 
 export default invoiceService;
