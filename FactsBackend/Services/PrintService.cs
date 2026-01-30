@@ -19,8 +19,8 @@ public class PrintService
     /// </summary>
     public async Task<bool> PrintInvoice(int invoiceId, int layoutId)
     {
-        var invoice = await _db.Invoices
-            .Include(i => i.Client)
+        var invoice = await _db
+            .Invoices.Include(i => i.Client)
             .Include(i => i.Services)
             .FirstOrDefaultAsync(i => i.Id == invoiceId);
 
@@ -39,20 +39,23 @@ public class PrintService
     /// </summary>
     private bool PrintInvoiceDirect(Invoice invoice, PrintLayout layout)
     {
-        var doc = new PrintDocument();
-        
-        // Set printer if specified
-        if (!string.IsNullOrEmpty(layout.PrinterName))
+       var doc = new PrintDocument();
+        doc.PrintController = new StandardPrintController(); // No olvides esto para el error de diálogo
+
+        // VALIDACIÓN DE SEGURIDAD
+        bool printerExists = PrinterSettings.InstalledPrinters
+            .Cast<string>()
+            .Any(p => p == layout.PrinterName);
+
+        if (!printerExists)
         {
-            doc.PrinterSettings.PrinterName = layout.PrinterName;
+            throw new Exception($"La impresora '{layout.PrinterName}' no está instalada o no es accesible para el usuario del servidor.");
         }
 
+        doc.PrinterSettings.PrinterName = layout.PrinterName;
+
         var renderer = new InvoiceRenderer(layout);
-        
-        // Set custom paper size
         doc.DefaultPageSettings.PaperSize = renderer.GetPaperSize();
-        
-        // Disable margins for precise positioning
         doc.DefaultPageSettings.Margins = new Margins(0, 0, 0, 0);
 
         doc.PrintPage += (s, e) =>
@@ -68,8 +71,10 @@ public class PrintService
             doc.Print();
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            // Loguea el error real para que no sea un misterio
+            Console.WriteLine($"Error de impresión: {ex.Message}");
             return false;
         }
     }
@@ -80,7 +85,7 @@ public class PrintService
     public List<string> GetAvailablePrinters()
     {
         var printers = new List<string>();
-        
+
         foreach (string printer in PrinterSettings.InstalledPrinters)
         {
             printers.Add(printer);
@@ -95,8 +100,8 @@ public class PrintService
     /// </summary>
     public async Task<string> GeneratePreview(int invoiceId, int layoutId)
     {
-        var invoice = await _db.Invoices
-            .Include(i => i.Client)
+        var invoice = await _db
+            .Invoices.Include(i => i.Client)
             .Include(i => i.Services)
             .FirstOrDefaultAsync(i => i.Id == invoiceId);
 
@@ -108,17 +113,17 @@ public class PrintService
             throw new ArgumentException("Layout not found", nameof(layoutId));
 
         var renderer = new InvoiceRenderer(layout);
-        
+
         // Create bitmap for preview (A4 at 96 DPI)
         int widthPx = (int)(layout.PageWidthMm * 96 / 25.4f);
         int heightPx = (int)(layout.PageHeightMm * 96 / 25.4f);
 
         using var bitmap = new System.Drawing.Bitmap(widthPx, heightPx);
         using var g = System.Drawing.Graphics.FromImage(bitmap);
-        
+
         // White background
         g.Clear(System.Drawing.Color.White);
-        
+
         // Render invoice
         renderer.Render(g, invoice);
 

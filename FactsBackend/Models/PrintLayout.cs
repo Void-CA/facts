@@ -34,6 +34,14 @@ public class PrintField
     public float FontSize { get; set; } = 9f;
 }
 
+public class ColumnSettings
+{
+    public float CantidadX { get; set; } = 0f; 
+    public float DescripcionX { get; set; } = 25f;
+    public float PrecioX { get; set; } = 140f;
+    public float SubtotalX { get; set; } = 175f;
+}
+
 public class LayoutFields
 {
     public PrintField? Cliente { get; set; }
@@ -46,4 +54,7 @@ public class LayoutFields
     public PrintField? Total { get; set; }
     public PrintField? Estado { get; set; }
     public PrintField? Descripcion { get; set; }
+    public PrintField? Servicios { get; set; } // Representa el punto de inicio (X, Y)
+    public float RowHeight { get; set; } = 8f; // Altura de cada fila en mm
+    public ColumnSettings? Columnas { get; set; } = new();
 }

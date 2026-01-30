@@ -8,6 +8,13 @@ export interface PrintField {
     fontSize?: number;
 }
 
+export interface ColumnSettings {
+    cantidadX: number;     // Desplazamiento relativo en mm desde el inicio de la fila
+    descripcionX: number;
+    precioX: number;
+    subtotalX: number;
+}
+
 export interface LayoutFields {
     cliente?: PrintField;
     ruc?: PrintField;
@@ -19,6 +26,10 @@ export interface LayoutFields {
     total?: PrintField;
     estado?: PrintField;
     descripcion?: PrintField;
+
+    servicios?: PrintField;     // El X e Y indican dónde empieza la primera fila
+    rowHeight?: number;        // Espacio entre filas en mm (ej. 8)
+    columnas?: ColumnSettings; // Configuración de anchos de columna
 }
 
 export interface PrintLayout {
@@ -44,8 +55,16 @@ const printService = {
     },
 
     async saveLayout(layout: PrintLayout): Promise<PrintLayout> {
-        const response = await apiClient.post('/print/layouts', layout);
-        return response.data;
+    // Si fieldsJson es un objeto en tu estado de React, asegúrate de hacer stringify
+    const payload = {
+        ...layout,
+        fieldsJson: typeof layout.fieldsJson === 'string' 
+            ? layout.fieldsJson 
+            : JSON.stringify(layout.fieldsJson)
+    };
+    
+    const response = await apiClient.post('/print/layouts', payload);
+    return response.data;
     },
 
     async deleteLayout(id: number): Promise<void> {

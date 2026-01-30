@@ -23,15 +23,34 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({
         setShowPrintModal(true);
     };
 
+    const [printStatus, setPrintStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
+
     const handleConfirmPrint = async (layoutId: number) => {
         try {
             setPrinting(true);
+            setPrintStatus(null); // Limpiar mensajes previos
+
             await printService.printInvoice(invoice.id, layoutId);
-            alert('Impresión enviada correctamente');
-            setShowPrintModal(false);
-        } catch (error) {
+
+            // Si llega aquí, el backend respondió 200 OK
+            setPrintStatus({ type: 'success', msg: '¡Impresión enviada con éxito!' });
+            
+            // Cerramos el modal después de un pequeño delay para que vean el éxito
+            setTimeout(() => setShowPrintModal(false), 2000);
+
+        } catch (error: any) {
             console.error('Print failed:', error);
-            alert('Error al imprimir. Verifica la conexión con la impresora.');
+
+            // Extraemos el mensaje real que configuramos en el backend
+            const serverErrorMessage = error.response?.data?.detail 
+                || error.response?.data?.error 
+                || 'Error desconocido en el servidor';
+
+            setPrintStatus({ 
+                type: 'error', 
+                msg: `Fallo de impresión: ${serverErrorMessage}` 
+            });
+
         } finally {
             setPrinting(false);
         }
