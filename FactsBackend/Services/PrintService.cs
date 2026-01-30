@@ -100,6 +100,19 @@ public class PrintService
     /// </summary>
     public async Task<string> GeneratePreview(int invoiceId, int layoutId)
     {
+        var layout = await _db.PrintLayouts.FindAsync(layoutId);
+        if (layout == null)
+            throw new ArgumentException("Layout not found", nameof(layoutId));
+
+        return await GeneratePreview(invoiceId, layout);
+    }
+
+    /// <summary>
+    /// Generates a preview image for configuration purposes using a provided layout object
+    /// Returns base64 encoded PNG
+    /// </summary>
+    public async Task<string> GeneratePreview(int invoiceId, PrintLayout layout)
+    {
         var invoice = await _db
             .Invoices.Include(i => i.Client)
             .Include(i => i.Services)
@@ -107,10 +120,6 @@ public class PrintService
 
         if (invoice == null)
             throw new ArgumentException("Invoice not found", nameof(invoiceId));
-
-        var layout = await _db.PrintLayouts.FindAsync(layoutId);
-        if (layout == null)
-            throw new ArgumentException("Layout not found", nameof(layoutId));
 
         var renderer = new InvoiceRenderer(layout);
 
@@ -128,6 +137,36 @@ public class PrintService
         renderer.Render(g, invoice);
 
         // Convert to base64
+        using var ms = new System.IO.MemoryStream();
+        bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+        return Convert.ToBase64String(ms.ToArray());
+    }
+
+    public async Task<string> GeneratePreviewFromObject(int invoiceId, PrintLayout layout)
+    {
+        var invoice = await _db.Invoices
+        .Include(i => i.Client)
+        .Include(i => i.Services)
+        .FirstOrDefaultAsync(i => i.Id == invoiceId) 
+        ?? await _db.Invoices.Include(i => i.Client).Include(i => i.Services).FirstOrDefaultAsync();
+
+    if (invoice == null) 
+        throw new Exception("No hay facturas en la base de datos para generar una previsualización. Cree una factura primero.");
+
+
+        // 2. Usar el renderer con el objeto que viene del frontend
+        var renderer = new InvoiceRenderer(layout);
+        
+        // Calculamos píxeles a 96 DPI (estándar de pantalla)
+        int widthPx = (int)(layout.PageWidthMm * 96 / 25.4f);
+        int heightPx = (int)(layout.PageHeightMm * 96 / 25.4f);
+
+        using var bitmap = new System.Drawing.Bitmap(widthPx, heightPx);
+        using var g = System.Drawing.Graphics.FromImage(bitmap);
+        
+        g.Clear(System.Drawing.Color.White);
+        renderer.Render(g, invoice);
+
         using var ms = new System.IO.MemoryStream();
         bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
         return Convert.ToBase64String(ms.ToArray());

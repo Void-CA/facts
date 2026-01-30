@@ -90,21 +90,18 @@ public static class PrintEndpoints
             }
         });
 
-        // Generate preview for configuration
-        group.MapPost("/preview/{invoiceId:int}", async (int invoiceId, int layoutId, PrintService printService) =>
+        // 1. Asegúrate de que NO tenga 'int layoutId' en los paréntesis
+        group.MapPost("/preview/{invoiceId:int}", async (int invoiceId, PrintLayout layout, PrintService printService) =>
         {
-            try
+            try 
             {
-                var base64Image = await printService.GeneratePreview(invoiceId, layoutId);
+                // Pasamos el objeto 'layout' que viene del Body al nuevo método
+                var base64Image = await printService.GeneratePreviewFromObject(invoiceId, layout);
                 return Results.Ok(new { image = base64Image });
             }
-            catch (ArgumentException ex)
+            catch (Exception ex) 
             {
-                return Results.BadRequest(new { error = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Preview error: {ex.Message}");
+                return Results.Problem(detail: ex.Message, title: "Error en Preview");
             }
         });
     }

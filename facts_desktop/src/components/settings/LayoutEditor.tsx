@@ -50,11 +50,23 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
     const generatePreview = async () => {
         try {
             setIsGeneratingPreview(true);
-            // Usamos una factura de ejemplo (ID 1) para la previa
-            const base64 = await printService.getPreview(1, layout?.id || 0);
+
+            const tempLayout: PrintLayout = {
+                id: layout?.id || 0,
+                name: name || 'Preview',
+                printerName: printerName || '',
+                pageWidthMm: pageWidth || 210,
+                pageHeightMm: pageHeight || 297,
+                fieldsJson: JSON.stringify(fields), // Aquí van los cambios actuales
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            const base64 = await printService.getPreview(1, tempLayout);
             setPreviewUrl(`data:image/png;base64,${base64}`);
-        } catch (err) {
-            console.error("Error generando preview", err);
+        } catch (err: any) {
+            const msg = err.response?.data?.detail || "Error interno del servidor";
+            console.error("Detalle del error:", msg);
         } finally {
             setIsGeneratingPreview(false);
         }

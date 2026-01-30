@@ -55,16 +55,16 @@ const printService = {
     },
 
     async saveLayout(layout: PrintLayout): Promise<PrintLayout> {
-    // Si fieldsJson es un objeto en tu estado de React, asegúrate de hacer stringify
-    const payload = {
-        ...layout,
-        fieldsJson: typeof layout.fieldsJson === 'string' 
-            ? layout.fieldsJson 
-            : JSON.stringify(layout.fieldsJson)
-    };
-    
-    const response = await apiClient.post('/print/layouts', payload);
-    return response.data;
+        // Si fieldsJson es un objeto en tu estado de React, asegúrate de hacer stringify
+        const payload = {
+            ...layout,
+            fieldsJson: typeof layout.fieldsJson === 'string'
+                ? layout.fieldsJson
+                : JSON.stringify(layout.fieldsJson)
+        };
+
+        const response = await apiClient.post('/print/layouts', payload);
+        return response.data;
     },
 
     async deleteLayout(id: number): Promise<void> {
@@ -82,11 +82,10 @@ const printService = {
         });
     },
 
-    async getPreview(invoiceId: number, layoutId: number): Promise<string> {
-        const response = await apiClient.post(`/print/preview/${invoiceId}`, null, {
-            params: { layoutId }
-        });
-        return response.data.image; // base64 string
+    async getPreview(invoiceId: number, layout: PrintLayout): Promise<string> {
+        // El objeto layout es el segundo argumento (el BODY)
+        const response = await apiClient.post(`/print/preview/${invoiceId}`, layout);
+        return response.data.image;
     }
 };
 
