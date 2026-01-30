@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { PrintLayout, LayoutFields, PrintField } from '../../services/printService';
-import { ArrowLeft, Save, Plus, Trash2, Monitor, Printer, Check, X } from 'lucide-react';
+import printService, { PrintLayout, LayoutFields, PrintField } from '../../services/printService';
+import { Monitor, Printer, Check } from 'lucide-react';
 import FormLayout from '../FormLayout';
 
 interface LayoutEditorProps {
@@ -30,6 +30,28 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
     const [fields, setFields] = useState<LayoutFields>(
         layout?.fieldsJson ? JSON.parse(layout.fieldsJson) : defaultFields
     );
+    const [printers, setPrinters] = useState<string[]>([]);
+    const [loadingPrinters, setLoadingPrinters] = useState(false);
+
+    useEffect(() => {
+        loadPrinters();
+    }, []);
+
+    const loadPrinters = async () => {
+        try {
+            setLoadingPrinters(true);
+            const list = await printService.getPrinters();
+            setPrinters(list);
+            // Auto-select first printer if none selected and printers available
+            if (!printerName && list.length > 0) {
+                setPrinterName(list[0]);
+            }
+        } catch (error) {
+            console.error('Failed to load printers', error);
+        } finally {
+            setLoadingPrinters(false);
+        }
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -136,17 +158,37 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-text-main mb-1">Impresora (Opcional)</label>
+                            <label className="block text-sm font-medium text-text-main mb-1">Impresora</label>
                             <div className="relative">
                                 <Printer className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
-                                <input
-                                    type="text"
-                                    value={printerName}
-                                    onChange={(e) => setPrinterName(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-xl text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
-                                    placeholder="Nombre exacto de la impresora"
-                                />
+                                {loadingPrinters ? (
+                                    <div className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-xl text-text-muted italic flex items-center">
+                                        <span className="animate-pulse">Buscando impresoras...</span>
+                                    </div>
+                                ) : printers.length > 0 ? (
+                                    <select
+                                        value={printerName}
+                                        onChange={(e) => setPrinterName(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-xl text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm appearance-none"
+                                    >
+                                        <option value="">-- Seleccionar Impresora --</option>
+                                        {printers.map(p => (
+                                            <option key={p} value={p}>{p}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={printerName}
+                                        onChange={(e) => setPrinterName(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-xl text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+                                        placeholder="Nombre exacto de la impresora"
+                                    />
+                                )}
                             </div>
+                            {printers.length === 0 && !loadingPrinters && (
+                                <p className="text-xs text-amber-500 mt-1">No se detectaron impresoras. Ingrese el nombre manualmente.</p>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">

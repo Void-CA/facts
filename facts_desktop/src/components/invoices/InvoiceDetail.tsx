@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Printer, User, Calendar, Landmark, CreditCard, FileText, Hash, ReceiptText } from 'lucide-react';
 import { Invoice, Client } from '../../services/types';
 import printService from '../../services/printService';
+import PrintModal from '../print/PrintModal';
 
 interface InvoiceDetailProps {
     invoice: Invoice;
@@ -16,15 +17,21 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({
 }) => {
     const [printing, setPrinting] = useState(false);
 
-    const handlePrint = async () => {
+    const [showPrintModal, setShowPrintModal] = useState(false);
+
+    const handlePrintClick = () => {
+        setShowPrintModal(true);
+    };
+
+    const handleConfirmPrint = async (layoutId: number) => {
         try {
             setPrinting(true);
-            // Use first available layout (ID 1) - in production, let user select
-            await printService.printInvoice(invoice.id, 1);
+            await printService.printInvoice(invoice.id, layoutId);
             alert('Impresión enviada correctamente');
+            setShowPrintModal(false);
         } catch (error) {
             console.error('Print failed:', error);
-            alert('Error al imprimir. Asegúrate de tener un layout configurado.');
+            alert('Error al imprimir. Verifica la conexión con la impresora.');
         } finally {
             setPrinting(false);
         }
@@ -61,7 +68,7 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({
                         </div>
                         <div className="flex gap-2">
                             <button
-                                onClick={handlePrint}
+                                onClick={handlePrintClick}
                                 disabled={printing}
                                 className="group p-3 text-text-muted hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/10 rounded-2xl transition-all duration-200 active:scale-95 disabled:opacity-50"
                                 title="Imprimir factura"
@@ -217,13 +224,23 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({
                     <button onClick={onClose} className="flex items-center gap-2 px-8 py-3.5 bg-background text-text-main font-black rounded-2xl border border-border hover:bg-surface transition-all duration-200 active:scale-95 shadow-lg shadow-black/5 hover:shadow-xl">
                         Cancelar
                     </button>
-                    <button className="flex items-center gap-3 px-8 py-3.5 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all duration-300 active:scale-95 shadow-xl shadow-primary/30 hover:shadow-primary/40">
+                    <button
+                        onClick={handlePrintClick}
+                        className="flex items-center gap-3 px-8 py-3.5 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all duration-300 active:scale-95 shadow-xl shadow-primary/30 hover:shadow-primary/40"
+                    >
                         <Printer size={20} />
                         Imprimir
                     </button>
                 </div>
             </div>
-        </div>
+
+            <PrintModal
+                isOpen={showPrintModal}
+                onClose={() => setShowPrintModal(false)}
+                onConfirm={handleConfirmPrint}
+                loading={printing}
+            />
+        </div >
     );
 };
 
