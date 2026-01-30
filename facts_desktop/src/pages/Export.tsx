@@ -9,6 +9,8 @@ import {
     Loader2,
     CheckCircle2
 } from 'lucide-react';
+import { save } from '@tauri-apps/plugin-dialog';
+import { writeFile } from '@tauri-apps/plugin-fs';
 import invoiceService from '../services/invoiceService';
 
 const Export: React.FC = () => {
@@ -22,17 +24,29 @@ const Export: React.FC = () => {
         try {
             setLoading(true);
             setSuccess(false);
+
             const blob = await invoiceService.exportInvoices(startDate, endDate, format);
 
-            // Create download link
-            const url = window.URL.createObjectURL(new Blob([blob]));
-            const link = document.createElement('a');
-            link.href = url;
+            // Determine file extension
             const extension = format === 'excel' ? 'xlsx' : format === 'csv' ? 'csv' : 'pdf';
-            link.setAttribute('download', `facturas_${startDate}_al_${endDate}.${extension}`);
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode?.removeChild(link);
+
+            // Show save dialog
+            const path = await save({
+                defaultPath: `facturas_${startDate}_al_${endDate}.${extension}`,
+                filters: [{
+                    name: format.toUpperCase(),
+                    extensions: [extension]
+                }]
+            });
+
+            if (!path) {
+                setLoading(false);
+                return; // User cancelled
+            }
+
+            // Convert blob to ArrayBuffer and write to file
+            const buffer = await blob.arrayBuffer();
+            await writeFile(path, new Uint8Array(buffer));
 
             setSuccess(true);
             setTimeout(() => setSuccess(false), 3000);
