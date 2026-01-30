@@ -19,6 +19,7 @@ export interface Invoice {
     invoiceType: string;
     printNumber: number; // Changed from invoiceNumber and to number
     description?: string; // Changed from notes
+    providerName?: string;
     services: InvoiceItem[]; // Changed from items
     calcTotal: number;
 }

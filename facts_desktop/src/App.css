@@ -3,6 +3,7 @@
 @theme {
     --color-background: var(--background);
     --color-surface: var(--surface);
+    --color-surface-muted: var(--surface-muted);
     --color-primary: var(--primary);
     --color-text-main: var(--text-main);
     --color-text-muted: var(--text-muted);
@@ -11,7 +12,8 @@
 
 :root {
     --background: #ffffff;
-    --surface: #fff2ee;
+    --surface: #fff7f4;
+    --surface-muted: #fff2ee;
     --primary: #f97316;
     --text-main: #1f2937;
     --text-muted: #6b7280;
@@ -19,12 +21,13 @@
 }
 
 .dark {
-    --background: #111827;
-    --surface: #1f2937;
+    --background: #0a0a0b;
+    --surface: #161618;
+    --surface-muted: #1c1c1e;
     --primary: #fb923c;
     --text-main: #f9fafb;
-    --text-muted: #9ca3af;
-    --border: #374151;
+    --text-muted: #a1a1aa;
+    --border: #27272a;
 }
 
 body {

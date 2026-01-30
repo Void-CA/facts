@@ -50,6 +50,7 @@ public static class InvoiceEndpoints
             invoice.PrintNumber = updated.PrintNumber;
             invoice.Description = updated.Description;
             invoice.Provider = updated.Provider;
+            invoice.ProviderName = updated.ProviderName;
 
             // Synchronization logic for Services collection
             // 1. Remove services that are not in the 'updated' list
@@ -111,6 +112,15 @@ public static class InvoiceEndpoints
             if (invoice == null) return Results.NotFound();
 
             return Results.Ok(invoice);
+        });
+
+        group.MapGet("/last-print-number", async (AppDbContext db) =>
+        {
+            var lastNumber = await db.Invoices
+                .OrderByDescending(i => i.PrintNumber)
+                .Select(i => i.PrintNumber)
+                .FirstOrDefaultAsync();
+            return Results.Ok(lastNumber);
         });
     }
 }

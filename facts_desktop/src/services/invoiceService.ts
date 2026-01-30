@@ -25,6 +25,10 @@ const invoiceService = {
         const response = await apiClient.get<Invoice>(`/invoices/full_invoice/${id}`);
         return response.data;
     },
+    getLastPrintNumber: async () => {
+        const response = await apiClient.get<number>('/invoices/last-print-number');
+        return response.data;
+    },
 };
 
 export default invoiceService;

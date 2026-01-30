@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Filter } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import InvoiceForm from '../components/forms/InvoiceForm';
 import ConfirmModal from '../components/ConfirmModal';
 import InvoiceTable from '../components/invoices/InvoiceTable';
@@ -9,10 +10,20 @@ import { Invoice } from '../services/types';
 
 const Invoices: React.FC = () => {
     const { invoices, clients, loading, addInvoice, updateInvoice, deleteInvoice } = useInvoices();
+    const location = useLocation();
     const [showModal, setShowModal] = useState(false);
     const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
     const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
     const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
+
+    useEffect(() => {
+        if (location.state?.openNew) {
+            setShowModal(true);
+            setEditingInvoice(null);
+            // Clear state to avoid reopening on refresh if possible, 
+            // though react-router state persist on refresh usually.
+        }
+    }, [location.state]);
 
     const handleFormSubmit = async (data: any) => {
         try {

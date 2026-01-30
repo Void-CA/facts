@@ -5,6 +5,7 @@ import ClientSelect from './ClientSelect';
 import ThemedSelect from './ThemedSelect';
 import { Client, Invoice, InvoiceItem } from '../../services/types';
 import { User, Calendar, FileText, Info } from 'lucide-react';
+import invoiceService from '../../services/invoiceService';
 
 interface InvoiceFormProps {
     initialData?: Partial<Invoice>;
@@ -29,7 +30,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         invoiceType: initialData?.invoiceType || 'Ingreso',
         printNumber: initialData?.printNumber || 0,
         description: initialData?.description || '',
-        provider: initialData?.provider || '',
+        providerName: initialData?.providerName || '',
         services: initialData?.services || [
             { id: 0, specification: '', quantity: 1, price: 0, subtotal: 0 }
         ]
@@ -41,6 +42,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         const newTotal = formData.services.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0);
         setTotal(newTotal);
     }, [formData.services]);
+
+    useEffect(() => {
+        const fetchLastNumber = async () => {
+            if (!isEdit && !initialData?.printNumber) {
+                try {
+                    const lastNumber = await invoiceService.getLastPrintNumber();
+                    setFormData(prev => ({ ...prev, printNumber: lastNumber + 1 }));
+                } catch (error) {
+                    console.error("Error fetching last print number:", error);
+                }
+            }
+        };
+
+        fetchLastNumber();
+    }, [isEdit, initialData]);
 
     const handleUpdateItem = (index: number, field: string, value: any) => {
         const newServices = [...formData.services];
@@ -227,13 +243,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         </div>
                         <div className="space-y-4">
                             <div className="space-y-1">
-                                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Proveedor</label>
+                                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Proveedor / Negocio</label>
                                 <input
                                     type="text"
-                                    value={formData.provider}
-                                    onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
+                                    value={formData.providerName}
+                                    onChange={(e) => setFormData({ ...formData, providerName: e.target.value })}
                                     className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                    placeholder="Nombre del proveedor..."
+                                    placeholder="Nombre del proveedor o comercio..."
                                 />
                             </div>
                             <div className="space-y-1">

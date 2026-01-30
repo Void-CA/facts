@@ -23,6 +23,8 @@ public class Invoice
 
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 
+    public string? ProviderName { get; set; }
+
     public string? Description { get; set; }
 
     public List<Service> Services { get; set; } = new();
