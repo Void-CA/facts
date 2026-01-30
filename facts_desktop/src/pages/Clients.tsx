@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Users } from 'lucide-react';
 import ClientForm from '../components/forms/ClientForm';
 import ConfirmModal from '../components/ConfirmModal';
 import ClientCard from '../components/clients/ClientCard';
 import { useClients } from '../hooks/useClients';
 import { Client } from '../services/types';
+import PageHeader from '../components/PageHeader';
 
 const Clients: React.FC = () => {
     const { clients, loading, addClient, updateClient, deleteClient } = useClients();
@@ -50,16 +51,19 @@ const Clients: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-text-main tracking-tight">Clientes</h1>
+            <PageHeader
+                title="Clientes"
+                description="Administra tu base de datos de clientes"
+                icon={Users}
+            >
                 <button
                     onClick={() => { setEditingClient(null); setShowModal(true); }}
-                    className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
+                    className="bg-primary text-white px-5 py-2.5 rounded-xl font-bold hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20 active:scale-95"
                 >
                     <Plus size={20} />
                     Nuevo Cliente
                 </button>
-            </div>
+            </PageHeader>
 
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={20} />

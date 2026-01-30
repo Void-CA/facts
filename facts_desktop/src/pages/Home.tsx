@@ -7,10 +7,12 @@ import {
     Plus,
     Clock,
     CheckCircle2,
-    AlertCircle
+    AlertCircle,
+    LayoutDashboard
 } from 'lucide-react';
 import { useInvoices } from '../hooks/useInvoices';
 import { Link } from 'react-router-dom';
+import PageHeader from '../components/PageHeader';
 
 const Home: React.FC = () => {
     const { invoices, clients, loading } = useInvoices();
@@ -61,11 +63,11 @@ const Home: React.FC = () => {
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-4xl font-black text-text-main tracking-tight leading-none mb-2">Panel de Control</h1>
-                    <p className="text-text-muted font-medium italic">Resumen general de tu facturación y actividad.</p>
-                </div>
+            <PageHeader
+                title="Panel de Control"
+                description="Resumen general de tu facturación y actividad"
+                icon={LayoutDashboard}
+            >
                 <div className="flex gap-3">
                     <Link
                         to="/invoices"
@@ -76,7 +78,7 @@ const Home: React.FC = () => {
                         Nueva Factura
                     </Link>
                 </div>
-            </div>
+            </PageHeader>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -1,6 +1,7 @@
 // Forced reload trigger
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using FactsBackend.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=facts.db"));
 
+// Registrar servicios
+builder.Services.AddScoped<FactsBackend.Services.PrintService>();
+
 var app = builder.Build();
 
 // Migraciones automáticas al iniciar (opcional)
@@ -37,6 +41,7 @@ app.MapClientEndpoints();  // modular, limpio
 app.MapInvoiceEndpoints(); // cada entidad tiene su propio archivo
 app.MapServiceEndpoints();
 app.MapNotificationEndpoints();
+app.MapPrintEndpoints();
 
 app.UseCors("AllowTauri");
 app.Run();

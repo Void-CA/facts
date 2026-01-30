@@ -48,6 +48,42 @@ namespace FactsBackend.Migrations
                     b.ToTable("Clients");
                 });
 
+            modelBuilder.Entity("FactsBackend.Models.PrintLayout", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FieldsJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<float>("PageHeightMm")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("PageWidthMm")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("PrinterName")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PrintLayouts");
+                });
+
             modelBuilder.Entity("Invoice", b =>
                 {
                     b.Property<int>("Id")

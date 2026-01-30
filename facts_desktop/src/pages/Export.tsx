@@ -5,13 +5,13 @@ import {
     FileSpreadsheet,
     FileText as FileCsv,
     FileType,
-    ChevronRight,
     Loader2,
     CheckCircle2
 } from 'lucide-react';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import invoiceService from '../services/invoiceService';
+import PageHeader from '../components/PageHeader';
 
 const Export: React.FC = () => {
     const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
@@ -67,10 +67,11 @@ const Export: React.FC = () => {
     return (
         <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header */}
-            <div>
-                <h1 className="text-4xl font-black text-text-main tracking-tight leading-none mb-2">Exportación de Datos</h1>
-                <p className="text-text-muted font-medium italic text-lg">Descarga tus facturas emitidas en el formato que necesites.</p>
-            </div>
+            <PageHeader
+                title="Exportación"
+                description="Descarga tus datos en múltiples formatos"
+                icon={Download}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Left: Configuration */}

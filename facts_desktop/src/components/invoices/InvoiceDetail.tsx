@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Printer, User, Calendar, Landmark, CreditCard, FileText, Hash, ReceiptText } from 'lucide-react';
 import { Invoice, Client } from '../../services/types';
+import printService from '../../services/printService';
 
 interface InvoiceDetailProps {
     invoice: Invoice;
@@ -13,6 +14,22 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({
     clients,
     onClose
 }) => {
+    const [printing, setPrinting] = useState(false);
+
+    const handlePrint = async () => {
+        try {
+            setPrinting(true);
+            // Use first available layout (ID 1) - in production, let user select
+            await printService.printInvoice(invoice.id, 1);
+            alert('Impresión enviada correctamente');
+        } catch (error) {
+            console.error('Print failed:', error);
+            alert('Error al imprimir. Asegúrate de tener un layout configurado.');
+        } finally {
+            setPrinting(false);
+        }
+    };
+
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
             case 'pagado': return 'text-green-600 bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20';
@@ -42,12 +59,22 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({
                                 </div>
                             </div>
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="group p-3 text-text-muted hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 rounded-2xl transition-all duration-200 active:scale-95"
-                        >
-                            <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handlePrint}
+                                disabled={printing}
+                                className="group p-3 text-text-muted hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/10 rounded-2xl transition-all duration-200 active:scale-95 disabled:opacity-50"
+                                title="Imprimir factura"
+                            >
+                                <Printer size={24} className={printing ? 'animate-pulse' : ''} />
+                            </button>
+                            <button
+                                onClick={onClose}
+                                className="group p-3 text-text-muted hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 rounded-2xl transition-all duration-200 active:scale-95"
+                            >
+                                <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+                            </button>
+                        </div>
                     </div>
                 </div>
 

@@ -6,6 +6,7 @@ public class AppDbContext : DbContext
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<Service> Services => Set<Service>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<FactsBackend.Models.PrintLayout> PrintLayouts => Set<FactsBackend.Models.PrintLayout>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options) { }
