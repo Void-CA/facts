@@ -34,6 +34,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
                         <th className="px-6 py-4">Nº Imp.</th>
                         <th className="px-6 py-4">Cliente</th>
                         <th className="px-6 py-4">Fecha Emisión</th>
+                        <th className="px-6 py-4">Tipo</th>
                         <th className="px-6 py-4">Total</th>
                         <th className="px-6 py-4">Estado</th>
                         <th className="px-6 py-4 text-right">Acciones</th>
@@ -53,6 +54,9 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
                             </td>
                             <td className="px-6 py-4 text-text-muted text-sm">
                                 {new Date(invoice.emittedDate).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 text-text-muted text-sm font-semibold">
+                                {invoice.invoiceType || 'N/A'}
                             </td>
                             <td className="px-6 py-4 font-bold text-text-main">
                                 ${(invoice.calcTotal || 0).toLocaleString()}
@@ -79,7 +83,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
                     ))}
                     {invoices.length === 0 && (
                         <tr>
-                            <td colSpan={6} className="p-12 text-center text-text-muted">
+                            <td colSpan={7} className="p-12 text-center text-text-muted">
                                 No hay facturas registradas.
                             </td>
                         </tr>
