@@ -45,3 +45,5 @@ app.MapPrintEndpoints();
 
 app.UseCors("AllowTauri");
 app.Run();
+
+public partial class Program { }
