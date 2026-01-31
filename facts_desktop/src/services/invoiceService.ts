@@ -36,6 +36,10 @@ const invoiceService = {
         });
         return response.data;
     },
+    getByMonths: async (months: { year: number; month: number }[]) => {
+        const response = await apiClient.post<Invoice[]>('/invoices/by-months', { months });
+        return response.data;
+    },
 };
 
 export default invoiceService;
