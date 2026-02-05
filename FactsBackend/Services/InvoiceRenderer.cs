@@ -40,20 +40,19 @@ public class InvoiceRenderer
         DrawField(g, _fields.Cliente, invoice.Client?.Name ?? "", dpi);
         DrawField(g, _fields.Ruc, invoice.Client?.RUC ?? "", dpi);
         DrawField(g, _fields.Fecha, invoice.EmittedDate.ToShortDateString(), dpi);
-        DrawField(g, _fields.FechaVencimiento, invoice.ExpireDate?.ToShortDateString() ?? "", dpi);
-        DrawField(g, _fields.Tipo, invoice.InvoiceType ?? "", dpi);
         DrawField(g, _fields.Numero, invoice.PrintNumber.ToString(), dpi);
-        DrawField(g, _fields.Proveedor, invoice.ProviderName ?? invoice.Provider ?? "", dpi);
 
         if (_fields.Servicios != null && _fields.Servicios.Enabled)
         {
             float startX = _fields.Servicios.X;
             float startY = _fields.Servicios.Y;
             float rowHeight = _fields.RowHeight > 0 ? _fields.RowHeight : 7f;
-
-            using var font = new Font(_fields.Servicios.FontName ?? "Arial", _fields.Servicios.FontSize);
+            using var font = new Font(
+                _fields.Servicios.FontName ?? "Arial",
+                _fields.Servicios.FontSize
+            );
             using var brush = new SolidBrush(Color.Black);
-            
+
             // Formato para alinear números a la derecha
             var alignRight = new StringFormat { Alignment = StringAlignment.Far };
 
@@ -65,30 +64,49 @@ public class InvoiceRenderer
                 float xBasePx = MmToPx(startX, dpi);
 
                 // Cantidad (Alineada a la derecha en su columna)
-                g.DrawString(service.Quantity.ToString(), font, brush, 
-                    xBasePx + MmToPx(_fields.Columnas.CantidadX, dpi), yPx);
+                g.DrawString(
+                    service.Quantity.ToString(),
+                    font,
+                    brush,
+                    xBasePx + MmToPx(_fields.Columnas.CantidadX, dpi),
+                    yPx
+                );
 
                 // Descripción (Alineada a la izquierda)
-                g.DrawString(service.Specification, font, brush, 
-                    xBasePx + MmToPx(_fields.Columnas.DescripcionX, dpi), yPx);
+                g.DrawString(
+                    service.Specification,
+                    font,
+                    brush,
+                    xBasePx + MmToPx(_fields.Columnas.DescripcionX, dpi),
+                    yPx
+                );
 
                 // Precio Unitario (Derecha)
-                g.DrawString(service.Price.ToString("N2"), font, brush, 
-                    xBasePx + MmToPx(_fields.Columnas.PrecioX, dpi), yPx, alignRight);
+                g.DrawString(
+                    service.Price.ToString("N2"),
+                    font,
+                    brush,
+                    xBasePx + MmToPx(_fields.Columnas.PrecioX, dpi),
+                    yPx,
+                    alignRight
+                );
 
                 // Subtotal (Derecha)
                 float subtotal = (float)(service.Quantity * service.Price);
-                g.DrawString(subtotal.ToString("N2"), font, brush, 
-                    xBasePx + MmToPx(_fields.Columnas.SubtotalX, dpi), yPx, alignRight);
+                g.DrawString(
+                    subtotal.ToString("N2"),
+                    font,
+                    brush,
+                    xBasePx + MmToPx(_fields.Columnas.SubtotalX, dpi),
+                    yPx,
+                    alignRight
+                );
             }
         }
 
         // 3. Dibujar Total Final (También alineado a la derecha si lo deseas)
         var total = invoice.Services.Sum(s => s.Quantity * s.Price);
         DrawField(g, _fields.Total, total.ToString("C"), dpi);
-
-        DrawField(g, _fields.Estado, invoice.State ?? "", dpi);
-        DrawField(g, _fields.Descripcion, invoice.Description ?? "", dpi);
     }
 
     /// <summary>

@@ -34,7 +34,7 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
         layout?.fieldsJson ? JSON.parse(layout.fieldsJson) : defaultFields
     );
     const [printers, setPrinters] = useState<string[]>([]);
-    const [loadingPrinters, setLoadingPrinters] = useState(false);
+    const [, setLoadingPrinters] = useState(false);
     // 1. Añade estos estados
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
@@ -131,7 +131,7 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
                             checked={field?.enabled || false}
                             onChange={(e) => handleFieldChange(fieldKey, { enabled: e.target.checked })}
                         />
-                        <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                     </label>
                 </div>
 
@@ -204,7 +204,7 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
                             Configuración General
                         </h3>
 
-                        <div className="bg-surface/30 p-6 rounded-[2rem] border border-border space-y-6">
+                        <div className="bg-surface/30 p-6 rounded-4xl border border-border space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="col-span-full">
                                     <label className="block text-xs font-black text-text-muted uppercase tracking-wider mb-2 ml-1">Nombre del Layout</label>
@@ -309,7 +309,7 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
                 </div>
 
                 {/* Right Panel: Live Preview */}
-                <div className="xl:w-[480px] flex-shrink-0">
+                <div className="xl:w-120 shrink-0">
                     <div className="sticky top-6 space-y-4">
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-black text-text-main flex items-center gap-2">
@@ -328,7 +328,7 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
 
                         <div className="relative w-full bg-zinc-900 border border-border rounded-[2rem] overflow-hidden shadow-2xl shadow-black/20 group">
                             {/* Paper Background */}
-                            <div className="w-full min-h-[600px] max-h-[85vh] overflow-y-auto custom-scrollbar p-8 flex justify-center bg-[#505050]">
+                            <div className="w-full min-h-150 max-h-[85vh] overflow-y-auto custom-scrollbar p-8 flex justify-center bg-[#505050]">
                                 {previewUrl ? (
                                     <div
                                         className="bg-white shadow-lg transition-opacity duration-300 relative"

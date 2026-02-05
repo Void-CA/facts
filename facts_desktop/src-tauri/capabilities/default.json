@@ -9,6 +9,18 @@
     "core:default",
     "opener:default",
     "dialog:allow-save",
-    "fs:allow-write-file"
+    "fs:allow-write-file",
+    "shell:allow-open",
+    "shell:allow-execute",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "bin/FactsBackend",
+          "sidecar": true,
+          "args": true
+        }
+      ]
+    }
   ]
 }

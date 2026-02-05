@@ -39,17 +39,19 @@ public class PrintService
     /// </summary>
     private bool PrintInvoiceDirect(Invoice invoice, PrintLayout layout)
     {
-       var doc = new PrintDocument();
+        var doc = new PrintDocument();
         doc.PrintController = new StandardPrintController(); // No olvides esto para el error de diálogo
 
         // VALIDACIÓN DE SEGURIDAD
-        bool printerExists = PrinterSettings.InstalledPrinters
-            .Cast<string>()
+        bool printerExists = PrinterSettings
+            .InstalledPrinters.Cast<string>()
             .Any(p => p == layout.PrinterName);
 
         if (!printerExists)
         {
-            throw new Exception($"La impresora '{layout.PrinterName}' no está instalada o no es accesible para el usuario del servidor.");
+            throw new Exception(
+                $"La impresora '{layout.PrinterName}' no está instalada o no es accesible para el usuario del servidor."
+            );
         }
 
         doc.PrinterSettings.PrinterName = layout.PrinterName;
@@ -144,26 +146,31 @@ public class PrintService
 
     public async Task<string> GeneratePreviewFromObject(int invoiceId, PrintLayout layout)
     {
-        var invoice = await _db.Invoices
-        .Include(i => i.Client)
-        .Include(i => i.Services)
-        .FirstOrDefaultAsync(i => i.Id == invoiceId) 
-        ?? await _db.Invoices.Include(i => i.Client).Include(i => i.Services).FirstOrDefaultAsync();
+        var invoice =
+            await _db
+                .Invoices.Include(i => i.Client)
+                .Include(i => i.Services)
+                .FirstOrDefaultAsync(i => i.Id == invoiceId)
+            ?? await _db
+                .Invoices.Include(i => i.Client)
+                .Include(i => i.Services)
+                .FirstOrDefaultAsync();
 
-    if (invoice == null) 
-        throw new Exception("No hay facturas en la base de datos para generar una previsualización. Cree una factura primero.");
-
+        if (invoice == null)
+            throw new Exception(
+                "No hay facturas en la base de datos para generar una previsualización. Cree una factura primero."
+            );
 
         // 2. Usar el renderer con el objeto que viene del frontend
         var renderer = new InvoiceRenderer(layout);
-        
+
         // Calculamos píxeles a 96 DPI (estándar de pantalla)
         int widthPx = (int)(layout.PageWidthMm * 96 / 25.4f);
         int heightPx = (int)(layout.PageHeightMm * 96 / 25.4f);
 
         using var bitmap = new System.Drawing.Bitmap(widthPx, heightPx);
         using var g = System.Drawing.Graphics.FromImage(bitmap);
-        
+
         g.Clear(System.Drawing.Color.White);
         renderer.Render(g, invoice);
 
