@@ -30,7 +30,7 @@ public class PrintField
     public float X { get; set; } // Position in mm
     public float Y { get; set; } // Position in mm
     public bool Enabled { get; set; } = true;
-    public string? FontName { get; set; } = "Arial";
+    public string? FontName { get; set; } = "Courier New";
     public float FontSize { get; set; } = 9f;
 }
 
