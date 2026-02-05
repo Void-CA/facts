@@ -10,19 +10,25 @@ interface LayoutEditorProps {
 }
 
 const defaultFields: LayoutFields = {
-    cliente: { x: 10, y: 10, enabled: true },
-    ruc: { x: 10, y: 20, enabled: true },
-    fecha: { x: 10, y: 30, enabled: true },
-    fechaVencimiento: { x: 50, y: 30, enabled: true },
-    tipo: { x: 10, y: 40, enabled: true },
-    numero: { x: 50, y: 40, enabled: true },
-    proveedor: { x: 10, y: 50, enabled: true },
-    total: { x: 50, y: 150, enabled: true },
-    estado: { x: 10, y: 150, enabled: true },
-    descripcion: { x: 10, y: 60, enabled: true },
-    // Campos añadidos para el cuerpo de la factura
+    cliente: { x: 10, y: 10, enabled: true, fontSize: 10 },
+    direccion: { x: 10, y: 15, enabled: true, fontSize: 9 },
+    ruc: { x: 10, y: 20, enabled: true, fontSize: 10 },
+    fecha: { x: 10, y: 30, enabled: true, fontSize: 10 },
+    fechaVencimiento: { x: 50, y: 30, enabled: true, fontSize: 10 },
+    tipo: { x: 10, y: 40, enabled: true, fontSize: 10 },
+    numero: { x: 50, y: 40, enabled: true, fontSize: 10 },
+    proveedor: { x: 10, y: 50, enabled: true, fontSize: 10 },
+    descripcion: { x: 10, y: 60, enabled: true, fontSize: 9 },
     servicios: { x: 10, y: 80, enabled: true, fontSize: 9 },
-    rowHeight: 8
+    rowHeight: 8,
+    columnas: {
+        cantidadX: 0,
+        descripcionX: 25,
+        precioX: 140,
+        subtotalX: 175
+    },
+    total: { x: 150, y: 150, enabled: true, fontSize: 11 },
+    estado: { x: 10, y: 150, enabled: true, fontSize: 9 }
 };
 
 const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel }) => {
@@ -30,9 +36,19 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
     const [printerName, setPrinterName] = useState(layout?.printerName || '');
     const [pageWidth, setPageWidth] = useState(layout?.pageWidthMm || 210);
     const [pageHeight, setPageHeight] = useState(layout?.pageHeightMm || 297);
-    const [fields, setFields] = useState<LayoutFields>(
-        layout?.fieldsJson ? JSON.parse(layout.fieldsJson) : defaultFields
-    );
+    
+    // Inicializar fields con valores por defecto para columnas si no existen
+    const initialFields = layout?.fieldsJson ? JSON.parse(layout.fieldsJson) : defaultFields;
+    if (!initialFields.columnas) {
+        initialFields.columnas = {
+            cantidadX: 0,
+            descripcionX: 25,
+            precioX: 140,
+            subtotalX: 175
+        };
+    }
+    
+    const [fields, setFields] = useState<LayoutFields>(initialFields);
     const [printers, setPrinters] = useState<string[]>([]);
     const [, setLoadingPrinters] = useState(false);
     // 1. Añade estos estados
@@ -121,9 +137,9 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
         if (key === 'rowHeight') return null;
 
         return (
-            <div className={`border border-border rounded-xl p-4 space-y-3 transition-all ${field?.enabled ? 'bg-surface/50 border-primary/20' : 'bg-background/50 opacity-60'}`}>
-                <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-text-main capitalize">{label}</span>
+            <div className={`border border-border rounded-lg p-2.5 transition-all ${field?.enabled ? 'bg-surface/50 border-primary/20' : 'bg-background/50 opacity-60'}`}>
+                <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-semibold text-text-main text-sm capitalize">{label}</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input
                             type="checkbox"
@@ -131,50 +147,50 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
                             checked={field?.enabled || false}
                             onChange={(e) => handleFieldChange(fieldKey, { enabled: e.target.checked })}
                         />
-                        <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        <div className="w-9 h-5 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                     </label>
                 </div>
 
                 {field?.enabled && (
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-2">
                         <div>
-                            <label className="block text-[10px] font-bold text-text-muted uppercase mb-1">X (mm)</label>
+                            <label className="block text-[9px] font-bold text-text-muted uppercase mb-0.5">X</label>
                             <input
                                 type="number"
                                 value={field.x}
                                 onChange={(e) => handleFieldChange(fieldKey, { x: parseFloat(e.target.value) || 0 })}
-                                className="w-full px-3 py-1.5 bg-background border border-border rounded-lg text-sm"
+                                className="w-full px-2 py-1 bg-background border border-border rounded text-xs"
                             />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-bold text-text-muted uppercase mb-1">Y (mm)</label>
+                            <label className="block text-[9px] font-bold text-text-muted uppercase mb-0.5">Y</label>
                             <input
                                 type="number"
                                 value={field.y}
                                 onChange={(e) => handleFieldChange(fieldKey, { y: parseFloat(e.target.value) || 0 })}
-                                className="w-full px-3 py-1.5 bg-background border border-border rounded-lg text-sm"
+                                className="w-full px-2 py-1 bg-background border border-border rounded text-xs"
                             />
                         </div>
-                        <div className="col-span-2 lg:col-span-1">
-                            <label className="block text-[10px] font-bold text-text-muted uppercase mb-1">Tamaño Fuente</label>
+                        <div>
+                            <label className="block text-[9px] font-bold text-text-muted uppercase mb-0.5">Font</label>
                             <input
                                 type="number"
                                 value={field.fontSize || 10}
                                 onChange={(e) => handleFieldChange(fieldKey, { fontSize: parseFloat(e.target.value) || 10 })}
-                                className="w-full px-3 py-1.5 bg-background border border-border rounded-lg text-sm"
+                                className="w-full px-2 py-1 bg-background border border-border rounded text-xs"
                             />
                         </div>
 
                         {/* Input especial para rowHeight si estamos en el campo servicios */}
                         {key === 'servicios' && (
-                            <div className="col-span-full pt-2 border-t border-border mt-2">
-                                <label className="block text-[10px] font-bold text-primary uppercase mb-1">Espaciado entre Filas (mm)</label>
+                            <div className="col-span-full pt-1.5 border-t border-border mt-1">
+                                <label className="block text-[9px] font-bold text-primary uppercase mb-0.5">Espaciado Filas</label>
                                 <input
                                     type="number"
                                     value={fields.rowHeight || 8}
                                     onChange={(e) => handleFieldChange('rowHeight', parseFloat(e.target.value) || 0)}
-                                    className="w-full px-3 py-1.5 bg-primary/5 border border-primary/20 rounded-lg text-sm font-bold text-primary"
-                                    placeholder="Ej. 8"
+                                    className="w-full px-2 py-1 bg-primary/5 border border-primary/20 rounded text-xs font-bold text-primary"
+                                    placeholder="8"
                                 />
                             </div>
                         )}
@@ -267,39 +283,44 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
                             Diseño del Documento
                         </h3>
 
-                        <div className="bg-surface/30 rounded-[2rem] border border-border overflow-hidden">
-                            <div className="p-2 space-y-2">
+                        <div className="bg-surface/30 rounded-2xl border border-border overflow-hidden">
+                            <div className="p-3 space-y-2">
                                 {/* Header Section */}
-                                <div className="bg-background/50 rounded-2xl border border-border/50 p-4">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                                        <h4 className="text-xs font-black text-text-main uppercase tracking-widest">Cabecera</h4>
+                                <div className="bg-background/50 rounded-xl border border-border/50 p-3">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-1 h-1 rounded-full bg-blue-500"></div>
+                                        <h4 className="text-[10px] font-black text-text-main uppercase tracking-wider">Cabecera</h4>
                                     </div>
-                                    <div className="grid grid-cols-1 gap-3">
+                                    <div className="grid grid-cols-2 gap-2">
                                         {renderFieldInput('cliente', 'Cliente')}
+                                        {renderFieldInput('direccion', 'Dirección')}
                                         {renderFieldInput('ruc', 'RUC / CI')}
                                         {renderFieldInput('fecha', 'Fecha Emisión')}
+                                        {renderFieldInput('fechaVencimiento', 'Fecha Venc.')}
+                                        {renderFieldInput('tipo', 'Tipo Factura')}
                                         {renderFieldInput('numero', 'Nº Factura')}
+                                        {renderFieldInput('proveedor', 'Proveedor')}
                                     </div>
                                 </div>
 
                                 {/* Body Section */}
-                                <div className="bg-background/50 rounded-2xl border border-border/50 p-4">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
-                                        <h4 className="text-xs font-black text-text-main uppercase tracking-widest">Cuerpo</h4>
+                                <div className="bg-background/50 rounded-xl border border-border/50 p-3">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-1 h-1 rounded-full bg-purple-500"></div>
+                                        <h4 className="text-[10px] font-black text-text-main uppercase tracking-wider">Cuerpo</h4>
                                     </div>
                                     {renderFieldInput('servicios', 'Tabla de Servicios')}
                                 </div>
 
                                 {/* Footer Section */}
-                                <div className="bg-background/50 rounded-2xl border border-border/50 p-4">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                                        <h4 className="text-xs font-black text-text-main uppercase tracking-widest">Totales y Pie</h4>
+                                <div className="bg-background/50 rounded-xl border border-border/50 p-3">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-1 h-1 rounded-full bg-green-500"></div>
+                                        <h4 className="text-[10px] font-black text-text-main uppercase tracking-wider">Totales y Pie</h4>
                                     </div>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        {renderFieldInput('total', 'Importe Total')}
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {renderFieldInput('total', 'Total')}
+                                        {renderFieldInput('estado', 'Estado')}
                                         {renderFieldInput('descripcion', 'Observaciones')}
                                     </div>
                                 </div>
@@ -326,7 +347,7 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({ layout, onSave, onCancel })
                             )}
                         </div>
 
-                        <div className="relative w-full bg-zinc-900 border border-border rounded-[2rem] overflow-hidden shadow-2xl shadow-black/20 group">
+                        <div className="relative w-full bg-zinc-900 border border-border rounded-4xl overflow-hidden shadow-2xl shadow-black/20 group">
                             {/* Paper Background */}
                             <div className="w-full min-h-150 max-h-[85vh] overflow-y-auto custom-scrollbar p-8 flex justify-center bg-[#505050]">
                                 {previewUrl ? (

@@ -17,6 +17,7 @@ export interface ColumnSettings {
 
 export interface LayoutFields {
     cliente?: PrintField;
+    direccion?: PrintField;
     ruc?: PrintField;
     fecha?: PrintField;
     fechaVencimiento?: PrintField;

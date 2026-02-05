@@ -46,6 +46,8 @@ public class LayoutFields
 {
     public PrintField? Cliente { get; set; }
     public PrintField? Ruc { get; set; }
+
+    public PrintField? Direccion { get; set; }
     public PrintField? Fecha { get; set; }
     public PrintField? FechaVencimiento { get; set; }
     public PrintField? Tipo { get; set; }
